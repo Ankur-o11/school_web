@@ -1,0 +1,64 @@
+/* ================= GLOBAL ================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: Inter, Arial, sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  background: #f5f7fb;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ================= APP ================= */
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ================= MAIN CONTENT ================= */
+
+.main-content {
+  width: calc(100% - 260px);
+  min-height: 100vh;
+
+  margin-left: 260px;
+
+  overflow-x: hidden;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 750px) {
+  .main-content {
+    width: calc(100% - 72px);
+    margin-left: 72px;
+  }
+}

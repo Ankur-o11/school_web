@@ -1,0 +1,240 @@
+.parents-page {
+  padding: 28px;
+  min-height: 100vh;
+  background: #f7f9fc;
+}
+
+.parents-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.parents-header h1 {
+  margin: 0;
+  color: #172033;
+  font-size: 29px;
+}
+
+.parents-header p {
+  margin: 6px 0 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.parents-add-btn {
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.parents-add-btn:hover {
+  background: #1d4ed8;
+}
+
+.parents-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.parents-stat-card {
+  background: white;
+  border: 1px solid #e5e9f0;
+  border-radius: 13px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.parents-stat-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 11px;
+  background: #edf4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.parents-stat-card span {
+  display: block;
+  color: #718096;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.parents-stat-card strong {
+  color: #172033;
+  font-size: 23px;
+}
+
+.parents-card {
+  background: white;
+  border: 1px solid #e5e9f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.parents-card-header {
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.parents-card-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 19px;
+}
+
+.parents-card-header p {
+  margin: 5px 0 0;
+  color: #718096;
+  font-size: 13px;
+}
+
+.parents-search {
+  width: 230px;
+  padding: 10px 12px;
+  border: 1px solid #d9dee7;
+  border-radius: 8px;
+  outline: none;
+}
+
+.parents-search:focus {
+  border-color: #2563eb;
+}
+
+.parents-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.parents-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parents-table th {
+  background: #f8fafc;
+  color: #667085;
+  font-size: 12px;
+  text-align: left;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.parents-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #edf0f4;
+  color: #475467;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.parents-table tbody tr:hover {
+  background: #fafcff;
+}
+
+.parent-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.parent-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #edf4ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.parent-person strong {
+  color: #172033;
+}
+
+.parent-active {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #e8f8ef;
+  color: #16834b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.parent-view-btn,
+.parent-edit-btn {
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.parent-view-btn {
+  border: 1px solid #d9dee7;
+  background: white;
+  color: #2563eb;
+}
+
+.parent-edit-btn {
+  border: 1px solid #d9dee7;
+  background: white;
+  color: #475467;
+}
+
+.parent-view-btn:hover,
+.parent-edit-btn:hover {
+  background: #f1f5ff;
+}
+
+@media (max-width: 1100px) {
+  .parents-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .parents-page {
+    padding: 18px;
+  }
+
+  .parents-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .parents-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .parents-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .parents-search {
+    width: 100%;
+  }
+}

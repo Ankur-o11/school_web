@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import "../Style/fees.css";
 function Fees() {
   const [students, setStudents] = useState([
     {

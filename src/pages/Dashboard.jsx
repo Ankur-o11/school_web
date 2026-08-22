@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import "../Style/dashboard.css";
 
 import {
@@ -9,27 +12,106 @@ import {
 } from "recharts";
 
 function Dashboard() {
+  const navigate = useNavigate();
 
-  // =========================
-  // FEES DATA
-  // =========================
+  // =====================================================
+  // STATE
+  // =====================================================
 
-  const feeData = [
-    { name: "Collected", value: 1850000 },
-    { name: "Pending", value: 2650000 },
-  ];
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
 
-  const FEE_COLORS = ["#22c55e", "#e5e7eb"];
+  const [loadingStudents, setLoadingStudents] = useState(true);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
 
+  // =====================================================
+  // FETCH STUDENTS
+  // =====================================================
 
-  // =========================
-  // ATTENDANCE DATA
-  // =========================
+  useEffect(() => {
+    fetch("http://localhost:5000/api/students")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Students API failed");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setStudents(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        console.error("Students API Error:", error);
+        setStudents([]);
+      })
+      .finally(() => {
+        setLoadingStudents(false);
+      });
+  }, []);
+
+  // =====================================================
+  // FETCH TEACHERS
+  // =====================================================
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/teachers")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Teachers API failed");
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setTeachers(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        console.error("Teachers API Error:", error);
+        setTeachers([]);
+      })
+      .finally(() => {
+        setLoadingTeachers(false);
+      });
+  }, []);
+
+  // =====================================================
+  // DASHBOARD CALCULATIONS
+  // =====================================================
+
+  const totalStudents = students.length;
+
+  const totalTeachers = teachers.length;
+
+  const activeStudents = students.filter(
+    (student) =>
+      !student.status ||
+      student.status.toLowerCase() === "active"
+  ).length;
+
+  const activeTeachers = teachers.filter(
+    (teacher) =>
+      !teacher.status ||
+      teacher.status.toLowerCase() === "active"
+  ).length;
+
+  // =====================================================
+  // STATIC ATTENDANCE FOR NOW
+  // FEES WILL BE CONNECTED LATER
+  // =====================================================
 
   const attendanceData = [
-    { name: "Present", value: 92 },
-    { name: "Absent", value: 6 },
-    { name: "Leave", value: 2 },
+    {
+      name: "Present",
+      value: 92,
+    },
+    {
+      name: "Absent",
+      value: 6,
+    },
+    {
+      name: "Leave",
+      value: 2,
+    },
   ];
 
   const ATTENDANCE_COLORS = [
@@ -38,13 +120,72 @@ function Dashboard() {
     "#f59e0b",
   ];
 
+  // =====================================================
+  // FEES DATA
+  // TEMPORARY - DO NOT CONNECT FEES API YET
+  // =====================================================
+
+  const feeData = [
+    {
+      name: "Collected",
+      value: 1850000,
+    },
+    {
+      name: "Pending",
+      value: 2650000,
+    },
+  ];
+
+  const FEE_COLORS = [
+    "#22c55e",
+    "#e5e7eb",
+  ];
+
+  // =====================================================
+  // DATE
+  // =====================================================
+
+  const today = new Date();
+
+  const formattedDate = today.toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }
+  );
+
+  // =====================================================
+  // RECENT STUDENTS
+  // =====================================================
+
+  const recentStudents = [...students]
+    .reverse()
+    .slice(0, 5);
+
+  // =====================================================
+  // LOADING TEXT
+  // =====================================================
+
+  const studentCountText = loadingStudents
+    ? "..."
+    : totalStudents;
+
+  const teacherCountText = loadingTeachers
+    ? "..."
+    : totalTeachers;
+
+  // =====================================================
+  // RENDER
+  // =====================================================
 
   return (
     <div className="dashboard-page">
 
-      {/* =========================
+      {/* =====================================================
           HEADER
-      ========================= */}
+      ===================================================== */}
 
       <div className="dashboard-header">
 
@@ -55,7 +196,7 @@ function Dashboard() {
           </span>
 
           <h1>
-            Good Morning, Admin 👋
+            Good Evening, Admin 👋
           </h1>
 
           <p>
@@ -64,17 +205,20 @@ function Dashboard() {
 
         </div>
 
-
         <div className="dashboard-date">
 
-          <span>📅</span>
+          <span>
+            📅
+          </span>
 
           <div>
 
-            <small>Today</small>
+            <small>
+              Today
+            </small>
 
             <strong>
-              14 August 2026
+              {formattedDate}
             </strong>
 
           </div>
@@ -83,13 +227,11 @@ function Dashboard() {
 
       </div>
 
-
-      {/* =========================
+      {/* =====================================================
           STAT CARDS
-      ========================= */}
+      ===================================================== */}
 
       <div className="dashboard-stats">
-
 
         {/* STUDENTS */}
 
@@ -106,17 +248,16 @@ function Dashboard() {
             </span>
 
             <h2>
-              100
+              {studentCountText}
             </h2>
 
             <small className="positive">
-              ↗ +8 this month
+              ✓ {activeStudents} active students
             </small>
 
           </div>
 
         </div>
-
 
         {/* TEACHERS */}
 
@@ -133,17 +274,16 @@ function Dashboard() {
             </span>
 
             <h2>
-              18
+              {teacherCountText}
             </h2>
 
             <small className="positive">
-              ↗ 2 new teachers
+              ✓ {activeTeachers} active teachers
             </small>
 
           </div>
 
         </div>
-
 
         {/* FEES */}
 
@@ -164,13 +304,12 @@ function Dashboard() {
             </h2>
 
             <small className="positive">
-              ↗ +12% this month
+              Current session
             </small>
 
           </div>
 
         </div>
-
 
         {/* ATTENDANCE */}
 
@@ -200,20 +339,17 @@ function Dashboard() {
 
       </div>
 
-
-      {/* =========================
+      {/* =====================================================
           ATTENDANCE + FEES
-      ========================= */}
+      ===================================================== */}
 
       <div className="dashboard-grid">
 
-
-        {/* =========================
+        {/* =====================================================
             ATTENDANCE
-        ========================= */}
+        ===================================================== */}
 
         <div className="dashboard-panel">
-
 
           <div className="panel-header">
 
@@ -229,18 +365,18 @@ function Dashboard() {
 
             </div>
 
-
-            <button className="panel-btn">
+            <button
+              className="panel-btn"
+              onClick={() => navigate("/attendance")}
+            >
               View Details
             </button>
 
           </div>
 
-
           <div className="attendance-box">
 
-
-            {/* ATTENDANCE CHART */}
+            {/* CHART */}
 
             <div className="attendance-chart-wrapper">
 
@@ -263,32 +399,26 @@ function Dashboard() {
 
                     {attendanceData.map(
                       (entry, index) => (
-
                         <Cell
                           key={`attendance-${index}`}
                           fill={
                             ATTENDANCE_COLORS[index]
                           }
                         />
-
                       )
                     )}
 
                   </Pie>
 
-
                   <Tooltip
                     formatter={(value) =>
-                      `${value} students`
+                      `${value}%`
                     }
                   />
 
                 </PieChart>
 
               </ResponsiveContainer>
-
-
-              {/* CENTER TEXT */}
 
               <div className="attendance-chart-center">
 
@@ -304,13 +434,9 @@ function Dashboard() {
 
             </div>
 
-
-            {/* ATTENDANCE DETAILS */}
+            {/* DETAILS */}
 
             <div className="attendance-details">
-
-
-              {/* PRESENT */}
 
               <div className="attendance-item">
 
@@ -323,15 +449,12 @@ function Dashboard() {
                   </p>
 
                   <strong>
-                    92
+                    92%
                   </strong>
 
                 </div>
 
               </div>
-
-
-              {/* ABSENT */}
 
               <div className="attendance-item">
 
@@ -344,15 +467,12 @@ function Dashboard() {
                   </p>
 
                   <strong>
-                    6
+                    6%
                   </strong>
 
                 </div>
 
               </div>
-
-
-              {/* LEAVE */}
 
               <div className="attendance-item">
 
@@ -365,13 +485,12 @@ function Dashboard() {
                   </p>
 
                   <strong>
-                    2
+                    2%
                   </strong>
 
                 </div>
 
               </div>
-
 
             </div>
 
@@ -379,13 +498,11 @@ function Dashboard() {
 
         </div>
 
-
-        {/* =========================
+        {/* =====================================================
             FEES
-        ========================= */}
+        ===================================================== */}
 
         <div className="dashboard-panel">
-
 
           <div className="panel-header">
 
@@ -401,18 +518,16 @@ function Dashboard() {
 
             </div>
 
-
-            <button className="panel-btn">
+            <button
+              className="panel-btn"
+              onClick={() => navigate("/fees")}
+            >
               View Fees
             </button>
 
           </div>
 
-
           <div className="fee-chart-section">
-
-
-            {/* PIE CHART */}
 
             <div className="fee-pie-wrapper">
 
@@ -435,19 +550,16 @@ function Dashboard() {
 
                     {feeData.map(
                       (entry, index) => (
-
                         <Cell
                           key={`fee-${index}`}
                           fill={
                             FEE_COLORS[index]
                           }
                         />
-
                       )
                     )}
 
                   </Pie>
-
 
                   <Tooltip
                     formatter={(value) =>
@@ -460,9 +572,6 @@ function Dashboard() {
                 </PieChart>
 
               </ResponsiveContainer>
-
-
-              {/* CENTER TEXT */}
 
               <div className="fee-pie-center">
 
@@ -478,11 +587,7 @@ function Dashboard() {
 
             </div>
 
-
-            {/* FEE DETAILS */}
-
             <div className="fee-chart-details">
-
 
               <div className="fee-chart-item">
 
@@ -502,7 +607,6 @@ function Dashboard() {
 
               </div>
 
-
               <div className="fee-chart-item">
 
                 <div>
@@ -521,7 +625,6 @@ function Dashboard() {
 
               </div>
 
-
               <div className="fee-chart-total">
 
                 <span>
@@ -534,13 +637,9 @@ function Dashboard() {
 
               </div>
 
-
             </div>
 
           </div>
-
-
-          {/* PROGRESS */}
 
           <div className="fee-progress">
 
@@ -553,28 +652,25 @@ function Dashboard() {
 
           </div>
 
-
           <p className="fee-percent">
             41% of total fees collected
           </p>
-
 
         </div>
 
       </div>
 
-
-      {/* =========================
+      {/* =====================================================
           RECENT STUDENTS + QUICK ACTIONS
-      ========================= */}
+      ===================================================== */}
 
       <div className="dashboard-grid">
 
-
-        {/* RECENT STUDENTS */}
+        {/* =====================================================
+            RECENT STUDENTS
+        ===================================================== */}
 
         <div className="dashboard-panel">
-
 
           <div className="panel-header">
 
@@ -590,101 +686,120 @@ function Dashboard() {
 
             </div>
 
-
-            <button className="panel-btn">
+            <button
+              className="panel-btn"
+              onClick={() => navigate("/students")}
+            >
               View All
             </button>
 
           </div>
 
-
           <div className="recent-list">
 
+            {loadingStudents ? (
 
-            <div className="recent-item">
+              <div className="recent-item">
 
-              <div className="avatar">
-                RS
-              </div>
+                <div className="student-info">
 
-              <div className="student-info">
+                  <strong>
+                    Loading students...
+                  </strong>
 
-                <strong>
-                  Rahul Sharma
-                </strong>
+                  <span>
+                    Please wait
+                  </span>
 
-                <span>
-                  Class 10-A • Roll 21
-                </span>
-
-              </div>
-
-              <small>
-                Today
-              </small>
-
-            </div>
-
-
-            <div className="recent-item">
-
-              <div className="avatar">
-                AS
-              </div>
-
-              <div className="student-info">
-
-                <strong>
-                  Aman Singh
-                </strong>
-
-                <span>
-                  Class 10-A • Roll 22
-                </span>
+                </div>
 
               </div>
 
-              <small>
-                Yesterday
-              </small>
+            ) : recentStudents.length === 0 ? (
 
-            </div>
+              <div className="recent-item">
 
+                <div className="student-info">
 
-            <div className="recent-item">
+                  <strong>
+                    No students found
+                  </strong>
 
-              <div className="avatar">
-                RK
-              </div>
+                  <span>
+                    Add students from Students section
+                  </span>
 
-              <div className="student-info">
-
-                <strong>
-                  Rohit Kumar
-                </strong>
-
-                <span>
-                  Class 9-B • Roll 14
-                </span>
+                </div>
 
               </div>
 
-              <small>
-                12 Aug
-              </small>
+            ) : (
 
-            </div>
+              recentStudents.map((student) => {
 
+                const studentName =
+                  student.name || "Unknown Student";
+
+                const initials =
+                  studentName
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map(
+                      (word) =>
+                        word.charAt(0).toUpperCase()
+                    )
+                    .join("");
+
+                return (
+
+                  <div
+                    className="recent-item"
+                    key={student.id}
+                  >
+
+                    <div className="avatar">
+                      {initials || "ST"}
+                    </div>
+
+                    <div className="student-info">
+
+                      <strong>
+                        {studentName}
+                      </strong>
+
+                      <span>
+                        Class {student.class || "-"}
+                        {student.section
+                          ? `-${student.section}`
+                          : ""}
+                        {" • "}
+                        Roll {student.rollNo || "-"}
+                      </span>
+
+                    </div>
+
+                    <small>
+                      Active
+                    </small>
+
+                  </div>
+
+                );
+
+              })
+
+            )}
 
           </div>
 
         </div>
 
-
-        {/* QUICK ACTIONS */}
+        {/* =====================================================
+            QUICK ACTIONS
+        ===================================================== */}
 
         <div className="dashboard-panel">
-
 
           <div className="panel-header">
 
@@ -702,11 +817,11 @@ function Dashboard() {
 
           </div>
 
-
           <div className="quick-actions">
 
-
-            <button>
+            <button
+              onClick={() => navigate("/students")}
+            >
 
               <span>
                 👨‍🎓
@@ -726,8 +841,9 @@ function Dashboard() {
 
             </button>
 
-
-            <button>
+            <button
+              onClick={() => navigate("/fees")}
+            >
 
               <span>
                 💰
@@ -747,8 +863,9 @@ function Dashboard() {
 
             </button>
 
-
-            <button>
+            <button
+              onClick={() => navigate("/attendance")}
+            >
 
               <span>
                 📅
@@ -768,8 +885,9 @@ function Dashboard() {
 
             </button>
 
-
-            <button>
+            <button
+              onClick={() => alert("Notice module will be added next.")}
+            >
 
               <span>
                 📢
@@ -788,7 +906,6 @@ function Dashboard() {
               </div>
 
             </button>
-
 
           </div>
 

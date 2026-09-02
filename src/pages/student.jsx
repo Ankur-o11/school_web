@@ -1,9 +1,24 @@
-import { useEffect, useState } from "react";
-import "../style/students.css";
+import { useEffect, useMemo, useState } from "react";
+import "../Style/students.css";
 
 function Students() {
+  // =====================================================
+  // STATES
+  // =====================================================
+
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [viewStudent, setViewStudent] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState("All");
+
+  // =====================================================
+  // EMPTY FORM
+  // =====================================================
 
   const emptyForm = {
     name: "",
@@ -11,73 +26,158 @@ function Students() {
     mother: "",
     dob: "",
     gender: "",
+    bloodGroup: "",
+
     aadhaar: "",
     pan: "",
+    penNo: "",
+
     admissionNo: "",
     admissionDate: "",
+    admissionType: "New",
+    session: "",
+
     className: "",
     section: "",
     roll: "",
+
     mobile: "",
     alternateMobile: "",
+    email: "",
     address: "",
+
+    previousSchool: "",
+    receiptNo: "",
+
     status: "Active",
   };
 
   const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-  const [viewStudent, setViewStudent] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [search, setSearch] = useState("");
-  const [classFilter, setClassFilter] = useState("All");
 
   // =====================================================
-  // FETCH STUDENTS
+  // CLASS LIST
+  // =====================================================
+
+  const classes = [
+    "PG",
+    "Nursery",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
+
+  // =====================================================
+  // FORMAT STUDENT
+  // =====================================================
+
+  const formatStudent = (student) => {
+    return {
+      id: student.id || student._id || "",
+
+      name: student.name || "",
+      father: student.father || "",
+      mother: student.mother || "",
+
+      dob: student.dob || "",
+      gender: student.gender || "",
+      bloodGroup: student.bloodGroup || "",
+
+      aadhaar: student.aadhaar || "",
+      pan: student.pan || "",
+      penNo: student.penNo || "",
+
+      admissionNo: student.admissionNo || "",
+      admissionDate: student.admissionDate || "",
+      admissionType: student.admissionType || "New",
+      session: student.session || "",
+
+      className: student.className || student.class || "",
+      section: student.section || "",
+
+      roll: student.roll || student.rollNo || "",
+
+      mobile: student.mobile || "",
+      alternateMobile: student.alternateMobile || "",
+
+      email: student.email || "",
+      address: student.address || "",
+
+      previousSchool: student.previousSchool || "",
+      receiptNo: student.receiptNo || "",
+
+      status: student.status || "Active",
+
+      createdAt: student.createdAt || "",
+      updatedAt: student.updatedAt || "",
+    };
+  };
+
+  // =====================================================
+  // LOAD STUDENTS
+  // =====================================================
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "http://localhost:5000/api/students"
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Server returned ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      console.log("Students API Response:", data);
+
+      const studentsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data.students)
+        ? data.students
+        : [];
+
+      setStudents(
+        studentsArray.map(formatStudent)
+      );
+    } catch (error) {
+      console.error(
+        "Error fetching students:",
+        error
+      );
+
+      setStudents([]);
+
+      alert(
+        "Unable to load students from server. Please check backend server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =====================================================
+  // LOAD ON PAGE OPEN
   // =====================================================
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/students")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch students");
-        }
-
-        return response.json();
-      })
-      .then((data) => {
-        const formattedStudents = data.map((student) => ({
-          id: student.id,
-          name: student.name || "",
-          father: student.father || "",
-          mother: student.mother || "",
-          dob: student.dob || "",
-          gender: student.gender || "",
-          aadhaar: student.aadhaar || "",
-          pan: student.pan || "",
-          admissionNo: student.admissionNo || "",
-          admissionDate: student.admissionDate || "",
-          className: student.class || "",
-          section: student.section || "",
-          roll: student.rollNo || "",
-          mobile: student.mobile || "",
-          alternateMobile: student.alternateMobile || "",
-          address: student.address || "",
-          status: student.status || "Active",
-        }));
-
-        setStudents(formattedStudents);
-      })
-      .catch((error) => {
-        console.error("Error fetching students:", error);
-        alert("Unable to load students from server.");
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    loadStudents();
   }, []);
 
   // =====================================================
-  // FORM HANDLING
+  // HANDLE FORM CHANGE
   // =====================================================
 
   const handleChange = (e) => {
@@ -89,29 +189,46 @@ function Students() {
     }));
   };
 
-  const openAddForm = () => {
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowForm(true);
-  };
+  // =====================================================
+  // OPEN EDIT FORM
+  // =====================================================
 
   const openEditForm = (student) => {
+    if (!student) return;
+
     setForm({
       name: student.name || "",
       father: student.father || "",
       mother: student.mother || "",
+
       dob: student.dob || "",
       gender: student.gender || "",
+      bloodGroup: student.bloodGroup || "",
+
       aadhaar: student.aadhaar || "",
       pan: student.pan || "",
+      penNo: student.penNo || "",
+
       admissionNo: student.admissionNo || "",
       admissionDate: student.admissionDate || "",
+      admissionType: student.admissionType || "New",
+      session: student.session || "",
+
       className: student.className || "",
       section: student.section || "",
       roll: student.roll || "",
+
       mobile: student.mobile || "",
       alternateMobile: student.alternateMobile || "",
+
+      email: student.email || "",
       address: student.address || "",
+
+      previousSchool:
+        student.previousSchool || "",
+
+      receiptNo: student.receiptNo || "",
+
       status: student.status || "Active",
     });
 
@@ -119,133 +236,86 @@ function Students() {
     setShowForm(true);
   };
 
+  // =====================================================
+  // CLOSE EDIT FORM
+  // =====================================================
+
   const closeForm = () => {
     setShowForm(false);
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
   };
 
   // =====================================================
-  // ADD / EDIT STUDENT
+  // UPDATE STUDENT
   // =====================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !form.name.trim() ||
-      !form.father.trim() ||
-      !form.className ||
-      !form.section ||
-      !form.roll.trim() ||
-      !form.mobile.trim()
-    ) {
-      alert("Please fill all required fields.");
+    if (!form.name.trim()) {
+      alert("Student name is required.");
+      return;
+    }
+
+    if (!editingId) {
+      alert(
+        "Students can be added from Admission Form."
+      );
       return;
     }
 
     const studentData = {
-      name: form.name,
-      father: form.father,
-      mother: form.mother,
+      name: form.name.trim(),
+      father: form.father.trim(),
+      mother: form.mother.trim(),
+
       dob: form.dob,
       gender: form.gender,
+      bloodGroup: form.bloodGroup,
 
-      aadhaar: form.aadhaar,
-      pan: form.pan,
+      aadhaar: form.aadhaar.trim(),
+      pan: form.pan.trim(),
+      penNo: form.penNo.trim(),
 
-      admissionNo: form.admissionNo,
+      admissionNo: form.admissionNo.trim(),
       admissionDate: form.admissionDate,
+      admissionType: form.admissionType,
+      session: form.session,
 
       class: form.className,
+      className: form.className,
+
       section: form.section,
-      rollNo: form.roll,
 
-      mobile: form.mobile,
-      alternateMobile: form.alternateMobile,
+      rollNo: form.roll.trim(),
+      roll: form.roll.trim(),
 
-      address: form.address,
+      mobile: form.mobile.trim(),
+      alternateMobile:
+        form.alternateMobile.trim(),
+
+      email: form.email.trim(),
+      address: form.address.trim(),
+
+      previousSchool:
+        form.previousSchool.trim(),
+
+      receiptNo: form.receiptNo.trim(),
+
       status: form.status || "Active",
     };
 
-    // =================================================
-    // EDIT
-    // =================================================
-
-    if (editingId !== null) {
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/students/${editingId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(studentData),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to update student"
-          );
-        }
-
-        const updatedStudent = {
-          id: data.student.id,
-          name: data.student.name || "",
-          father: data.student.father || "",
-          mother: data.student.mother || "",
-          dob: data.student.dob || "",
-          gender: data.student.gender || "",
-          aadhaar: data.student.aadhaar || "",
-          pan: data.student.pan || "",
-          admissionNo: data.student.admissionNo || "",
-          admissionDate: data.student.admissionDate || "",
-          className: data.student.class || "",
-          section: data.student.section || "",
-          roll: data.student.rollNo || "",
-          mobile: data.student.mobile || "",
-          alternateMobile:
-            data.student.alternateMobile || "",
-          address: data.student.address || "",
-          status: data.student.status || "Active",
-        };
-
-        setStudents((previousStudents) =>
-          previousStudents.map((student) =>
-            student.id === editingId
-              ? updatedStudent
-              : student
-          )
-        );
-
-        alert("Student updated successfully!");
-        closeForm();
-      } catch (error) {
-        console.error("Update error:", error);
-        alert(
-          "Unable to update student. Please check backend server."
-        );
-      }
-
-      return;
-    }
-
-    // =================================================
-    // ADD
-    // =================================================
-
     try {
       const response = await fetch(
-        "http://localhost:5000/api/students",
+        `http://localhost:5000/api/students/${editingId}`,
         {
-          method: "POST",
+          method: "PUT",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(studentData),
         }
       );
@@ -254,51 +324,58 @@ function Students() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to add student"
+          data.message ||
+            "Failed to update student"
         );
       }
 
-      const newStudent = {
-        id: data.student.id,
-        name: data.student.name || "",
-        father: data.student.father || "",
-        mother: data.student.mother || "",
-        dob: data.student.dob || "",
-        gender: data.student.gender || "",
-        aadhaar: data.student.aadhaar || "",
-        pan: data.student.pan || "",
-        admissionNo: data.student.admissionNo || "",
-        admissionDate: data.student.admissionDate || "",
-        className: data.student.class || "",
-        section: data.student.section || "",
-        roll: data.student.rollNo || "",
-        mobile: data.student.mobile || "",
-        alternateMobile:
-          data.student.alternateMobile || "",
-        address: data.student.address || "",
-        status: data.student.status || "Active",
-      };
+      const updatedStudent = formatStudent(
+        data.student || data
+      );
 
-      setStudents((previousStudents) => [
-        ...previousStudents,
-        newStudent,
-      ]);
+      setStudents(
+        (previousStudents) =>
+          previousStudents.map((student) =>
+            student.id === editingId
+              ? updatedStudent
+              : student
+          )
+      );
 
-      alert("Student added successfully!");
+      if (
+        viewStudent &&
+        viewStudent.id === editingId
+      ) {
+        setViewStudent(updatedStudent);
+      }
+
+      alert(
+        "Student updated successfully!"
+      );
+
       closeForm();
     } catch (error) {
-      console.error("Add error:", error);
+      console.error(
+        "Update error:",
+        error
+      );
+
       alert(
-        "Unable to add student. Please check backend server."
+        "Unable to update student. Please check backend server."
       );
     }
   };
 
   // =====================================================
-  // DELETE
+  // DELETE STUDENT
   // =====================================================
 
   const deleteStudent = async (id) => {
+    if (!id) {
+      alert("Student ID is missing.");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this student?"
     );
@@ -317,19 +394,29 @@ function Students() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to delete student"
+          data.message ||
+            "Failed to delete student"
         );
       }
 
-      setStudents((previousStudents) =>
-        previousStudents.filter(
-          (student) => student.id !== id
-        )
+      setStudents(
+        (previousStudents) =>
+          previousStudents.filter(
+            (student) =>
+              student.id !== id
+          )
       );
 
-      alert("Student deleted successfully!");
+      setViewStudent(null);
+
+      alert(
+        "Student deleted successfully!"
+      );
     } catch (error) {
-      console.error("Delete error:", error);
+      console.error(
+        "Delete error:",
+        error
+      );
 
       alert(
         "Unable to delete student. Please check backend server."
@@ -338,29 +425,747 @@ function Students() {
   };
 
   // =====================================================
-  // SEARCH + FILTER
+  // FILTERED STUDENTS
   // =====================================================
 
-  const filteredStudents = students.filter((student) => {
-    const searchText = search.trim().toLowerCase();
+  const filteredStudents = useMemo(() => {
+    const searchText =
+      search.trim().toLowerCase();
 
-    const matchesSearch =
-      searchText === "" ||
-      student.name.toLowerCase().includes(searchText) ||
-      student.father.toLowerCase().includes(searchText) ||
-      student.mother.toLowerCase().includes(searchText) ||
-      String(student.roll).includes(searchText) ||
-      String(student.mobile).includes(searchText) ||
-      String(student.admissionNo)
-        .toLowerCase()
-        .includes(searchText);
+    return students.filter((student) => {
+      const searchableText = [
+        student.name,
+        student.father,
+        student.mother,
 
-    const matchesClass =
-      classFilter === "All" ||
-      student.className === classFilter;
+        student.admissionNo,
+        student.roll,
 
-    return matchesSearch && matchesClass;
-  });
+        student.mobile,
+        student.alternateMobile,
+
+        student.email,
+
+        student.aadhaar,
+        student.pan,
+        student.penNo,
+
+        student.address,
+
+        student.previousSchool,
+
+        student.className,
+        student.section,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch =
+        searchText === "" ||
+        searchableText.includes(searchText);
+
+      const matchesClass =
+        classFilter === "All" ||
+        student.className === classFilter;
+
+      return (
+        matchesSearch &&
+        matchesClass
+      );
+    });
+  }, [
+    students,
+    search,
+    classFilter,
+  ]);
+
+  // =====================================================
+  // STATISTICS
+  // =====================================================
+
+  const totalStudents =
+    filteredStudents.length;
+
+  const newStudents =
+    filteredStudents.filter(
+      (student) =>
+        String(
+          student.admissionType
+        ).toLowerCase() === "new"
+    ).length;
+
+  const oldStudents =
+    filteredStudents.filter(
+      (student) =>
+        String(
+          student.admissionType
+        ).toLowerCase() === "old"
+    ).length;
+
+  const totalBoys =
+    filteredStudents.filter(
+      (student) =>
+        String(
+          student.gender
+        ).toLowerCase() === "male"
+    ).length;
+
+  const totalGirls =
+    filteredStudents.filter(
+      (student) =>
+        String(
+          student.gender
+        ).toLowerCase() === "female"
+    ).length;
+
+  // =====================================================
+  // PRINT STUDENT
+  // =====================================================
+
+  const printStudent = (student) => {
+    if (!student) return;
+
+    const printWindow = window.open(
+      "",
+      "_blank",
+      "width=900,height=900"
+    );
+
+    if (!printWindow) {
+      alert(
+        "Please allow pop-ups to print student details."
+      );
+      return;
+    }
+
+    const safe = (value) => {
+      if (
+        value === null ||
+        value === undefined ||
+        value === ""
+      ) {
+        return "Not Provided";
+      }
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+
+      <html>
+
+      <head>
+
+        <meta charset="UTF-8" />
+
+        <title>
+          Student Profile - ${safe(student.name)}
+        </title>
+
+        <style>
+
+          * {
+            box-sizing: border-box;
+          }
+
+          body {
+            margin: 0;
+            padding: 0;
+            font-family:
+              Arial,
+              Helvetica,
+              sans-serif;
+
+            color: #111827;
+            background: #ffffff;
+          }
+
+          .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: auto;
+            padding: 14mm;
+          }
+
+          .school-header {
+            text-align: center;
+            border-bottom:
+              2px solid #111827;
+
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+          }
+
+          .school-header h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+          }
+
+          .school-header p {
+            margin: 5px 0 0;
+            font-size: 13px;
+          }
+
+          .title {
+            text-align: center;
+            margin: 15px 0;
+          }
+
+          .title h2 {
+            margin: 0;
+            font-size: 20px;
+          }
+
+          .student-top {
+            display: flex;
+            justify-content: space-between;
+
+            border: 1px solid #333;
+
+            padding: 12px;
+            margin-bottom: 15px;
+          }
+
+          .student-name {
+            font-size: 19px;
+            font-weight: bold;
+          }
+
+          .status {
+            font-weight: bold;
+          }
+
+          .section {
+            margin-top: 15px;
+          }
+
+          .section-title {
+            background: #eeeeee;
+
+            border:
+              1px solid #333;
+
+            padding: 7px 10px;
+
+            font-weight: bold;
+            font-size: 14px;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+
+          td {
+            border:
+              1px solid #555;
+
+            padding: 7px 8px;
+
+            font-size: 12px;
+            vertical-align: top;
+          }
+
+          td.label {
+            width: 25%;
+
+            font-weight: bold;
+
+            background: #fafafa;
+          }
+
+          .footer {
+            margin-top: 35px;
+
+            display: flex;
+            justify-content: space-between;
+
+            font-size: 12px;
+          }
+
+          @page {
+            size: A4;
+            margin: 0;
+          }
+
+          @media print {
+
+            body {
+              background: white;
+            }
+
+            .page {
+              margin: 0;
+            }
+
+          }
+
+        </style>
+
+      </head>
+
+      <body>
+
+        <div class="page">
+
+          <div class="school-header">
+
+            <h1>
+              Maharana Pratap Science Academy
+              Inter College
+            </h1>
+
+            <p>
+              Student Management System
+            </p>
+
+          </div>
+
+          <div class="title">
+
+            <h2>
+              STUDENT PROFILE
+            </h2>
+
+          </div>
+
+          <div class="student-top">
+
+            <div>
+
+              <div class="student-name">
+                ${safe(student.name)}
+              </div>
+
+              <div>
+                Class:
+                ${safe(student.className)}
+
+                -
+
+                ${safe(student.section)}
+
+                &nbsp;&nbsp; | &nbsp;&nbsp;
+
+                Roll No:
+                ${safe(student.roll)}
+              </div>
+
+            </div>
+
+            <div class="status">
+
+              Status:
+              ${safe(student.status)}
+
+            </div>
+
+          </div>
+
+          <!-- PERSONAL -->
+
+          <div class="section">
+
+            <div class="section-title">
+              Personal Information
+            </div>
+
+            <table>
+
+              <tr>
+
+                <td class="label">
+                  Student Name
+                </td>
+
+                <td>
+                  ${safe(student.name)}
+                </td>
+
+                <td class="label">
+                  Gender
+                </td>
+
+                <td>
+                  ${safe(student.gender)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Father Name
+                </td>
+
+                <td>
+                  ${safe(student.father)}
+                </td>
+
+                <td class="label">
+                  Mother Name
+                </td>
+
+                <td>
+                  ${safe(student.mother)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Date of Birth
+                </td>
+
+                <td>
+                  ${safe(student.dob)}
+                </td>
+
+                <td class="label">
+                  Blood Group
+                </td>
+
+                <td>
+                  ${safe(student.bloodGroup)}
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <!-- ADMISSION -->
+
+          <div class="section">
+
+            <div class="section-title">
+              Admission Information
+            </div>
+
+            <table>
+
+              <tr>
+
+                <td class="label">
+                  Admission Number
+                </td>
+
+                <td>
+                  ${safe(student.admissionNo)}
+                </td>
+
+                <td class="label">
+                  Admission Type
+                </td>
+
+                <td>
+                  ${safe(student.admissionType)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Admission Date
+                </td>
+
+                <td>
+                  ${safe(student.admissionDate)}
+                </td>
+
+                <td class="label">
+                  Session
+                </td>
+
+                <td>
+                  ${safe(student.session)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Previous School
+                </td>
+
+                <td>
+                  ${safe(student.previousSchool)}
+                </td>
+
+                <td class="label">
+                  Receipt No.
+                </td>
+
+                <td>
+                  ${safe(student.receiptNo)}
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <!-- ACADEMIC -->
+
+          <div class="section">
+
+            <div class="section-title">
+              Academic Information
+            </div>
+
+            <table>
+
+              <tr>
+
+                <td class="label">
+                  Class
+                </td>
+
+                <td>
+                  ${safe(student.className)}
+                </td>
+
+                <td class="label">
+                  Section
+                </td>
+
+                <td>
+                  ${safe(student.section)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Roll Number
+                </td>
+
+                <td>
+                  ${safe(student.roll)}
+                </td>
+
+                <td class="label">
+                  Status
+                </td>
+
+                <td>
+                  ${safe(student.status)}
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <!-- IDENTITY -->
+
+          <div class="section">
+
+            <div class="section-title">
+              Identity Information
+            </div>
+
+            <table>
+
+              <tr>
+
+                <td class="label">
+                  Aadhaar Number
+                </td>
+
+                <td>
+                  ${safe(student.aadhaar)}
+                </td>
+
+                <td class="label">
+                  PAN Number
+                </td>
+
+                <td>
+                  ${safe(student.pan)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  PEN Number
+                </td>
+
+                <td colspan="3">
+                  ${safe(student.penNo)}
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <!-- CONTACT -->
+
+          <div class="section">
+
+            <div class="section-title">
+              Contact Information
+            </div>
+
+            <table>
+
+              <tr>
+
+                <td class="label">
+                  Parent Mobile
+                </td>
+
+                <td>
+                  ${safe(student.mobile)}
+                </td>
+
+                <td class="label">
+                  Alternate Mobile
+                </td>
+
+                <td>
+                  ${safe(student.alternateMobile)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Email
+                </td>
+
+                <td colspan="3">
+                  ${safe(student.email)}
+                </td>
+
+              </tr>
+
+              <tr>
+
+                <td class="label">
+                  Address
+                </td>
+
+                <td colspan="3">
+                  ${safe(student.address)}
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <div class="footer">
+
+            <span>
+              Student Record
+            </span>
+
+            <span>
+              Generated:
+              ${new Date().toLocaleDateString("en-IN")}
+            </span>
+
+          </div>
+
+        </div>
+
+        <script>
+
+          window.onload = function () {
+
+            window.print();
+
+            window.onafterprint = function () {
+              window.close();
+            };
+
+          };
+
+        </script>
+
+      </body>
+
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "Not Provided";
+    }
+
+    const d = new Date(date);
+
+    if (Number.isNaN(d.getTime())) {
+      return date;
+    }
+
+    return d.toLocaleDateString("en-IN");
+  };
+
+  // =====================================================
+  // FORMAT DATE TIME
+  // =====================================================
+
+  const formatDateTime = (value) => {
+    if (!value) {
+      return "Not Provided";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleString("en-IN");
+  };
+
+  // =====================================================
+  // CLASS DISPLAY NAME
+  // =====================================================
+
+  const getClassDisplayName = (className) => {
+    if (!className) {
+      return "All Classes";
+    }
+
+    if (
+      className === "PG" ||
+      className === "Nursery"
+    ) {
+      return className;
+    }
+
+    return `Class ${className}`;
+  };
 
   // =====================================================
   // UI
@@ -369,232 +1174,491 @@ function Students() {
   return (
     <div className="students-page">
 
-      {/* HEADER */}
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
-      <div className="page-header">
-        <div>
-          <h1>Students</h1>
+      <div className="students-main-header">
 
-          <p>
-            Manage all students of MPSA School
-          </p>
+        <div className="students-header-left">
+
+          <div className="students-header-icon">
+            👨‍🎓
+          </div>
+
+          <div>
+
+            <h1>
+              Students
+            </h1>
+
+            <p>
+              Complete student records of
+              Maharana Pratap Science Academy
+              Inter College
+            </p>
+
+          </div>
+
         </div>
 
-        <button
-          className="add-btn"
-          onClick={openAddForm}
-        >
-          + Add Student
-        </button>
+        <div className="student-header-info">
+
+          <span>
+            📚 Student Management
+          </span>
+
+          <span>
+            🗃️ {students.length} Records
+          </span>
+
+        </div>
+
       </div>
 
-      {/* STATS */}
+      {/* =================================================
+          CLASS FILTER
+      ================================================= */}
+
+      <div className="student-filter-card">
+
+        <div className="filter-left">
+
+          <label>
+            Select Class
+          </label>
+
+          <select
+            value={classFilter}
+            onChange={(e) =>
+              setClassFilter(
+                e.target.value
+              )
+            }
+          >
+
+            <option value="All">
+              All Classes
+            </option>
+
+            {classes.map((className) => (
+              <option
+                key={className}
+                value={className}
+              >
+                {getClassDisplayName(
+                  className
+                )}
+              </option>
+            ))}
+
+          </select>
+
+        </div>
+
+        <div className="filter-selected">
+
+          {classFilter === "All"
+            ? "Showing All Classes"
+            : `Showing ${getClassDisplayName(
+                classFilter
+              )}`}
+
+        </div>
+
+      </div>
+
+      {/* =================================================
+          STATISTICS
+      ================================================= */}
 
       <div className="student-stats">
 
         <div className="student-stat-card">
-          <span>👨‍🎓</span>
+
+          <div className="stat-icon">
+            👨‍🎓
+          </div>
 
           <div>
-            <p>Total Students</p>
-            <h2>{students.length}</h2>
+
+            <p>
+              Total Students
+            </p>
+
+            <h2>
+              {totalStudents}
+            </h2>
+
           </div>
+
         </div>
 
         <div className="student-stat-card">
-          <span>🟢</span>
+
+          <div className="stat-icon">
+            🆕
+          </div>
 
           <div>
-            <p>Active Students</p>
+
+            <p>
+              New Students
+            </p>
 
             <h2>
-              {
-                students.filter(
-                  (student) =>
-                    student.status === "Active"
-                ).length
-              }
+              {newStudents}
             </h2>
+
           </div>
+
         </div>
 
         <div className="student-stat-card">
-          <span>🏫</span>
+
+          <div className="stat-icon">
+            🔄
+          </div>
 
           <div>
-            <p>Total Classes</p>
+
+            <p>
+              Old Students
+            </p>
+
             <h2>
-              {
-                new Set(
-                  students.map(
-                    (student) => student.className
-                  )
-                ).size
-              }
+              {oldStudents}
             </h2>
+
           </div>
+
         </div>
+
+        <div className="student-stat-card">
+
+          <div className="stat-icon">
+            👦
+          </div>
+
+          <div>
+
+            <p>
+              Total Boys
+            </p>
+
+            <h2>
+              {totalBoys}
+            </h2>
+
+          </div>
+
+        </div>
+
+        <div className="student-stat-card">
+
+          <div className="stat-icon">
+            👧
+          </div>
+
+          <div>
+
+            <p>
+              Total Girls
+            </p>
+
+            <h2>
+              {totalGirls}
+            </h2>
+
+          </div>
+
+        </div>
+
       </div>
 
-      {/* SEARCH */}
+      {/* =================================================
+          SEARCH
+      ================================================= */}
 
       <div className="student-tools">
 
-        <input
-          type="text"
-          placeholder="Search student, father, admission no, roll or mobile..."
-          value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
-        />
+        <div className="search-box">
 
-        <select
-          value={classFilter}
-          onChange={(e) =>
-            setClassFilter(e.target.value)
-          }
-        >
-          <option value="All">
-            All Classes
-          </option>
+          <span>
+            🔎
+          </span>
 
-          <option value="12">Class 12</option>
-          <option value="11">Class 11</option>
-          <option value="10">Class 10</option>
-          <option value="9">Class 9</option>
-          <option value="8">Class 8</option>
-          <option value="7">Class 7</option>
-          <option value="6">Class 6</option>
-        </select>
+          <input
+            type="text"
+            placeholder="Search by name, father, admission no, roll, mobile, Aadhaar..."
+            value={search}
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
+          />
+
+          {search && (
+            <button
+              type="button"
+              onClick={() =>
+                setSearch("")
+              }
+            >
+              ✕
+            </button>
+          )}
+
+        </div>
+
       </div>
 
-      <div
-        style={{
-          marginBottom: "12px",
-          color: "#6b7280",
-          fontSize: "14px",
-        }}
-      >
-        Showing {filteredStudents.length} of{" "}
-        {students.length} students
+      {/* =================================================
+          RESULT INFO
+      ================================================= */}
+
+      <div className="student-result-info">
+
+        Showing{" "}
+
+        <strong>
+          {filteredStudents.length}
+        </strong>
+
+        {" "}of{" "}
+
+        <strong>
+          {students.length}
+        </strong>
+
+        {" "}students
+
+        {classFilter !== "All" && (
+          <>
+            {" "}•{" "}
+
+            <strong>
+              {getClassDisplayName(
+                classFilter
+              )}
+            </strong>
+          </>
+        )}
+
       </div>
 
-      {/* TABLE */}
+      {/* =================================================
+          STUDENTS TABLE
+      ================================================= */}
 
       <div className="students-table">
 
         <div className="student-row table-heading">
-          <span>Student</span>
-          <span>Class</span>
-          <span>Roll No.</span>
-          <span>Parent Contact</span>
-          <span>Status</span>
-          <span>Action</span>
+
+          <span>
+            Student
+          </span>
+
+          <span>
+            Class
+          </span>
+
+          <span>
+            Roll No.
+          </span>
+
+          <span>
+            Parent Contact
+          </span>
+
+          <span>
+            Status
+          </span>
+
+          <span>
+            Action
+          </span>
+
         </div>
+
+        {/* LOADING */}
 
         {loading ? (
           <div className="no-students">
-            <h3>Loading Students...</h3>
-            <p>Please wait...</p>
+
+            <h3>
+              Loading Students...
+            </h3>
+
+            <p>
+              Loading data from MongoDB...
+            </p>
+
           </div>
         ) : filteredStudents.length === 0 ? (
+
+          /* NO DATA */
+
           <div className="no-students">
-            <h3>No Students Found</h3>
+
+            <h3>
+              No Students Found
+            </h3>
+
             <p>
-              Try another search or class filter.
+              Try another search or
+              select another class.
             </p>
+
           </div>
+
         ) : (
-          filteredStudents.map((student) => (
-            <div
-              className="student-row"
-              key={student.id}
-            >
-              <span>
-                <strong>{student.name}</strong>
 
-                <small>
-                  Father: {student.father}
-                </small>
-              </span>
+          /* DATA */
 
-              <span>
-                {student.className}-
-                {student.section}
-              </span>
+          filteredStudents.map(
+            (student) => (
+              <div
+                className="student-row"
+                key={student.id}
+              >
 
-              <span>{student.roll}</span>
+                <span className="student-name-cell">
 
-              <span>{student.mobile}</span>
+                  <strong>
+                    {student.name}
+                  </strong>
 
-              <span>
-                <span className="active">
-                  {student.status}
+                  <small>
+                    Father:{" "}
+                    {student.father ||
+                      "Not Provided"}
+                  </small>
+
                 </span>
-              </span>
 
-              <span className="action-buttons">
+                <span>
+                  {student.className ||
+                    "—"}
 
-                <button
-                  type="button"
-                  title="View Student"
-                  onClick={() =>
-                    setViewStudent(student)
-                  }
-                >
-                  👁️
-                </button>
+                  {student.section
+                    ? `-${student.section}`
+                    : ""}
+                </span>
 
-                <button
-                  type="button"
-                  title="Edit Student"
-                  onClick={() =>
-                    openEditForm(student)
-                  }
-                >
-                  ✏️
-                </button>
+                <span>
+                  {student.roll ||
+                    "—"}
+                </span>
 
-                <button
-                  type="button"
-                  title="Delete Student"
-                  onClick={() =>
-                    deleteStudent(student.id)
-                  }
-                >
-                  🗑️
-                </button>
+                <span>
+                  {student.mobile ||
+                    "—"}
+                </span>
 
-              </span>
-            </div>
-          ))
+                <span>
+
+                  <span
+                    className={
+                      student.status ===
+                      "Active"
+                        ? "active"
+                        : "inactive"
+                    }
+                  >
+                    {student.status ||
+                      "Inactive"}
+                  </span>
+
+                </span>
+
+                <span className="action-buttons">
+
+                  {/* VIEW */}
+
+                  <button
+                    type="button"
+                    title="View Student"
+                    onClick={() =>
+                      setViewStudent(
+                        student
+                      )
+                    }
+                  >
+                    👁️
+                  </button>
+
+                  {/* EDIT */}
+
+                  <button
+                    type="button"
+                    title="Edit Student"
+                    onClick={() =>
+                      openEditForm(
+                        student
+                      )
+                    }
+                  >
+                    ✏️
+                  </button>
+
+                  {/* DELETE */}
+
+                  <button
+                    type="button"
+                    title="Delete Student"
+                    onClick={() =>
+                      deleteStudent(
+                        student.id
+                      )
+                    }
+                  >
+                    🗑️
+                  </button>
+
+                </span>
+
+              </div>
+            )
+          )
+
         )}
+
       </div>
 
-      {/* ================================================= */}
-      {/* ADD / EDIT MODAL */}
-      {/* ================================================= */}
+      {/* =================================================
+          EDIT MODAL
+      ================================================= */}
 
       {showForm && (
-        <div className="modal-overlay">
+        <div
+          className="modal-overlay"
+          onClick={closeForm}
+        >
 
-          <div className="student-modal">
+          <div
+            className="student-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            {/* MODAL HEADER */}
 
             <div className="modal-header">
 
               <div>
+
                 <h2>
-                  {editingId !== null
-                    ? "Edit Student"
-                    : "Add New Student"}
+                  Edit Student
                 </h2>
 
                 <p>
-                  {editingId !== null
-                    ? "Update complete student information"
-                    : "Enter complete student information"}
+                  Update complete student
+                  information
                 </p>
+
               </div>
 
               <button
@@ -604,63 +1668,82 @@ function Students() {
               >
                 ✕
               </button>
+
             </div>
 
-            <form onSubmit={handleSubmit}>
+            {/* FORM */}
+
+            <form
+              onSubmit={
+                handleSubmit
+              }
+            >
 
               <div className="form-grid">
 
-                {/* STUDENT NAME */}
+                {/* NAME */}
 
                 <div className="form-group">
+
                   <label>
                     Student Name *
                   </label>
 
                   <input
-                    type="text"
                     name="name"
                     value={form.name}
-                    onChange={handleChange}
-                    placeholder="Enter student name"
+                    onChange={
+                      handleChange
+                    }
+                    required
                   />
+
                 </div>
 
                 {/* FATHER */}
 
                 <div className="form-group">
+
                   <label>
-                    Father Name *
+                    Father Name
                   </label>
 
                   <input
-                    type="text"
                     name="father"
-                    value={form.father}
-                    onChange={handleChange}
-                    placeholder="Enter father name"
+                    value={
+                      form.father
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* MOTHER */}
 
                 <div className="form-group">
+
                   <label>
                     Mother Name
                   </label>
 
                   <input
-                    type="text"
                     name="mother"
-                    value={form.mother}
-                    onChange={handleChange}
-                    placeholder="Enter mother name"
+                    value={
+                      form.mother
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* DOB */}
 
                 <div className="form-group">
+
                   <label>
                     Date of Birth
                   </label>
@@ -668,23 +1751,34 @@ function Students() {
                   <input
                     type="date"
                     name="dob"
-                    value={form.dob}
-                    onChange={handleChange}
+                    value={
+                      form.dob
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* GENDER */}
 
                 <div className="form-group">
+
                   <label>
                     Gender
                   </label>
 
                   <select
                     name="gender"
-                    value={form.gender}
-                    onChange={handleChange}
+                    value={
+                      form.gender
+                    }
+                    onChange={
+                      handleChange
+                    }
                   >
+
                     <option value="">
                       Select Gender
                     </option>
@@ -700,92 +1794,85 @@ function Students() {
                     <option value="Other">
                       Other
                     </option>
+
                   </select>
+
                 </div>
 
-                {/* CLASS */}
+                {/* BLOOD */}
 
                 <div className="form-group">
+
                   <label>
-                    Class *
-                  </label>
-
-                  <select
-                    name="className"
-                    value={form.className}
-                    onChange={handleChange}
-                  >
-                    <option value="">
-                      Select Class
-                    </option>
-
-                    <option value="12">12</option>
-                    <option value="11">11</option>
-                    <option value="10">10</option>
-                    <option value="9">9</option>
-                    <option value="8">8</option>
-                    <option value="7">7</option>
-                    <option value="6">6</option>
-                  </select>
-                </div>
-
-                {/* SECTION */}
-
-                <div className="form-group">
-                  <label>
-                    Section *
-                  </label>
-
-                  <select
-                    name="section"
-                    value={form.section}
-                    onChange={handleChange}
-                  >
-                    <option value="">
-                      Select Section
-                    </option>
-
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                  </select>
-                </div>
-
-                {/* ROLL */}
-
-                <div className="form-group">
-                  <label>
-                    Roll Number *
+                    Blood Group
                   </label>
 
                   <input
-                    type="text"
-                    name="roll"
-                    value={form.roll}
-                    onChange={handleChange}
-                    placeholder="Enter roll number"
+                    name="bloodGroup"
+                    value={
+                      form.bloodGroup
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* ADMISSION NUMBER */}
 
                 <div className="form-group">
+
                   <label>
                     Admission Number
                   </label>
 
                   <input
-                    type="text"
                     name="admissionNo"
-                    value={form.admissionNo}
-                    onChange={handleChange}
-                    placeholder="e.g. MPSA-2026-001"
+                    value={
+                      form.admissionNo
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
+                </div>
+
+                {/* ADMISSION TYPE */}
+
+                <div className="form-group">
+
+                  <label>
+                    Admission Type
+                  </label>
+
+                  <select
+                    name="admissionType"
+                    value={
+                      form.admissionType
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  >
+
+                    <option value="New">
+                      New
+                    </option>
+
+                    <option value="Old">
+                      Old
+                    </option>
+
+                  </select>
+
                 </div>
 
                 {/* ADMISSION DATE */}
 
                 <div className="form-group">
+
                   <label>
                     Admission Date
                   </label>
@@ -793,96 +1880,332 @@ function Students() {
                   <input
                     type="date"
                     name="admissionDate"
-                    value={form.admissionDate}
-                    onChange={handleChange}
+                    value={
+                      form.admissionDate
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
+                </div>
+
+                {/* SESSION */}
+
+                <div className="form-group">
+
+                  <label>
+                    Session
+                  </label>
+
+                  <input
+                    name="session"
+                    value={
+                      form.session
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                </div>
+
+                {/* CLASS */}
+
+                <div className="form-group">
+
+                  <label>
+                    Class
+                  </label>
+
+                  <select
+                    name="className"
+                    value={
+                      form.className
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  >
+
+                    <option value="">
+                      Select Class
+                    </option>
+
+                    {classes.map(
+                      (className) => (
+                        <option
+                          key={
+                            className
+                          }
+                          value={
+                            className
+                          }
+                        >
+                          {className}
+                        </option>
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                {/* SECTION */}
+
+                <div className="form-group">
+
+                  <label>
+                    Section
+                  </label>
+
+                  <input
+                    name="section"
+                    value={
+                      form.section
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                </div>
+
+                {/* ROLL */}
+
+                <div className="form-group">
+
+                  <label>
+                    Roll Number
+                  </label>
+
+                  <input
+                    name="roll"
+                    value={
+                      form.roll
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
                 </div>
 
                 {/* MOBILE */}
 
                 <div className="form-group">
+
                   <label>
-                    Parent Mobile *
+                    Parent Mobile
                   </label>
 
                   <input
-                    type="tel"
                     name="mobile"
-                    value={form.mobile}
-                    onChange={handleChange}
-                    placeholder="Enter mobile number"
+                    value={
+                      form.mobile
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* ALTERNATE MOBILE */}
 
                 <div className="form-group">
+
                   <label>
                     Alternate Mobile
                   </label>
 
                   <input
-                    type="tel"
                     name="alternateMobile"
-                    value={form.alternateMobile}
-                    onChange={handleChange}
-                    placeholder="Enter alternate number"
+                    value={
+                      form.alternateMobile
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
+                </div>
+
+                {/* EMAIL */}
+
+                <div className="form-group">
+
+                  <label>
+                    Email
+                  </label>
+
+                  <input
+                    type="email"
+                    name="email"
+                    value={
+                      form.email
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
                 </div>
 
                 {/* AADHAAR */}
 
                 <div className="form-group">
+
                   <label>
-                    Aadhaar Number
+                    Aadhaar
                   </label>
 
                   <input
-                    type="text"
                     name="aadhaar"
-                    value={form.aadhaar}
-                    onChange={handleChange}
-                    placeholder="Enter Aadhaar number"
-                    maxLength="14"
+                    value={
+                      form.aadhaar
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
                 </div>
 
                 {/* PAN */}
 
                 <div className="form-group">
+
                   <label>
-                    PAN Number
+                    PAN
                   </label>
 
                   <input
-                    type="text"
                     name="pan"
-                    value={form.pan}
-                    onChange={handleChange}
-                    placeholder="Enter PAN number"
-                    maxLength="10"
+                    value={
+                      form.pan
+                    }
+                    onChange={
+                      handleChange
+                    }
                   />
+
+                </div>
+
+                {/* PEN */}
+
+                <div className="form-group">
+
+                  <label>
+                    PEN Number
+                  </label>
+
+                  <input
+                    name="penNo"
+                    value={
+                      form.penNo
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                </div>
+
+                {/* PREVIOUS SCHOOL */}
+
+                <div className="form-group">
+
+                  <label>
+                    Previous School
+                  </label>
+
+                  <input
+                    name="previousSchool"
+                    value={
+                      form.previousSchool
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                </div>
+
+                {/* RECEIPT */}
+
+                <div className="form-group">
+
+                  <label>
+                    Receipt Number
+                  </label>
+
+                  <input
+                    name="receiptNo"
+                    value={
+                      form.receiptNo
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                </div>
+
+                {/* STATUS */}
+
+                <div className="form-group">
+
+                  <label>
+                    Status
+                  </label>
+
+                  <select
+                    name="status"
+                    value={
+                      form.status
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  >
+
+                    <option value="Active">
+                      Active
+                    </option>
+
+                    <option value="Inactive">
+                      Inactive
+                    </option>
+
+                  </select>
+
                 </div>
 
                 {/* ADDRESS */}
 
                 <div className="form-group full-width">
+
                   <label>
                     Address
                   </label>
 
                   <textarea
                     name="address"
-                    value={form.address}
-                    onChange={handleChange}
-                    placeholder="Enter complete address"
+                    value={
+                      form.address
+                    }
+                    onChange={
+                      handleChange
+                    }
                     rows="3"
                   />
+
                 </div>
 
               </div>
 
-              {/* ACTIONS */}
+              {/* FORM ACTIONS */}
 
               <div className="form-actions">
 
@@ -898,26 +2221,28 @@ function Students() {
                   type="submit"
                   className="save-btn"
                 >
-                  {editingId !== null
-                    ? "Update Student"
-                    : "Save Student"}
+                  Update Student
                 </button>
 
               </div>
 
             </form>
+
           </div>
+
         </div>
       )}
 
-      {/* ================================================= */}
-      {/* STUDENT PROFILE */}
-      {/* ================================================= */}
+      {/* =================================================
+          VIEW STUDENT PROFILE
+      ================================================= */}
 
       {viewStudent && (
         <div
           className="modal-overlay"
-          onClick={() => setViewStudent(null)}
+          onClick={() =>
+            setViewStudent(null)
+          }
         >
 
           <div
@@ -942,28 +2267,51 @@ function Students() {
               </button>
 
               <div className="profile-avatar">
+
                 {viewStudent.name
-                  .charAt(0)
-                  .toUpperCase()}
+                  ? viewStudent.name
+                      .charAt(0)
+                      .toUpperCase()
+                  : "S"}
+
               </div>
 
               <div className="profile-main-info">
 
                 <h2>
-                  {viewStudent.name}
+                  {viewStudent.name ||
+                    "Student"}
                 </h2>
 
                 <p>
-                  Class {viewStudent.className}{" "}
-                  • Section {viewStudent.section}{" "}
-                  • Roll No. {viewStudent.roll}
+                  Class{" "}
+                  {viewStudent.className ||
+                    "—"}
+
+                  {" • "}
+
+                  Section{" "}
+                  {viewStudent.section ||
+                    "—"}
+
+                  {" • "}
+
+                  Roll No.{" "}
+                  {viewStudent.roll ||
+                    "—"}
                 </p>
 
                 <span className="profile-status">
-                  ● {viewStudent.status}
+
+                  ●{" "}
+
+                  {viewStudent.status ||
+                    "Active"}
+
                 </span>
 
               </div>
+
             </div>
 
             {/* PROFILE CONTENT */}
@@ -972,347 +2320,270 @@ function Students() {
 
               {/* PERSONAL */}
 
-              <div className="profile-section">
+              <ProfileSection
+                icon="👤"
+                title="Personal Information"
+                subtitle="Basic student details"
+              >
 
-                <div className="profile-section-title">
-                  <span>👤</span>
+                <ProfileGrid>
 
-                  <div>
-                    <h3>
-                      Personal Information
-                    </h3>
+                  <ProfileItem
+                    label="Student Name"
+                    value={
+                      viewStudent.name
+                    }
+                  />
 
-                    <p>
-                      Basic student details
-                    </p>
-                  </div>
-                </div>
+                  <ProfileItem
+                    label="Father Name"
+                    value={
+                      viewStudent.father
+                    }
+                  />
 
-                <div className="profile-grid">
+                  <ProfileItem
+                    label="Mother Name"
+                    value={
+                      viewStudent.mother
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>Student Name</label>
-                    <strong>
-                      {viewStudent.name}
-                    </strong>
-                  </div>
+                  <ProfileItem
+                    label="Date of Birth"
+                    value={formatDate(
+                      viewStudent.dob
+                    )}
+                  />
 
-                  <div className="profile-item">
-                    <label>Father Name</label>
-                    <strong>
-                      {viewStudent.father ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                  <ProfileItem
+                    label="Gender"
+                    value={
+                      viewStudent.gender
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>Mother Name</label>
-                    <strong>
-                      {viewStudent.mother ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                  <ProfileItem
+                    label="Blood Group"
+                    value={
+                      viewStudent.bloodGroup
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>Date of Birth</label>
-                    <strong>
-                      {viewStudent.dob ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                </ProfileGrid>
 
-                  <div className="profile-item">
-                    <label>Gender</label>
-                    <strong>
-                      {viewStudent.gender ||
-                        "Not provided"}
-                    </strong>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* IDENTITY */}
-
-              <div className="profile-section">
-
-                <div className="profile-section-title">
-                  <span>🪪</span>
-
-                  <div>
-                    <h3>
-                      Identity Information
-                    </h3>
-
-                    <p>
-                      Government identity details
-                    </p>
-                  </div>
-                </div>
-
-                <div className="profile-grid">
-
-                  <div className="profile-item">
-                    <label>
-                      Aadhaar Number
-                    </label>
-
-                    <strong>
-                      {viewStudent.aadhaar ||
-                        "Not provided"}
-                    </strong>
-                  </div>
-
-                  <div className="profile-item">
-                    <label>
-                      PAN Number
-                    </label>
-
-                    <strong>
-                      {viewStudent.pan ||
-                        "Not provided"}
-                    </strong>
-                  </div>
-
-                </div>
-              </div>
+              </ProfileSection>
 
               {/* ADMISSION */}
 
-              <div className="profile-section">
+              <ProfileSection
+                icon="🎓"
+                title="Admission Information"
+                subtitle="School admission details"
+              >
 
-                <div className="profile-section-title">
-                  <span>🎓</span>
+                <ProfileGrid>
 
-                  <div>
-                    <h3>
-                      Admission Information
-                    </h3>
+                  <ProfileItem
+                    label="Admission Number"
+                    value={
+                      viewStudent.admissionNo
+                    }
+                  />
 
-                    <p>
-                      School admission details
-                    </p>
-                  </div>
-                </div>
+                  <ProfileItem
+                    label="Admission Type"
+                    value={
+                      viewStudent.admissionType
+                    }
+                  />
 
-                <div className="profile-grid">
+                  <ProfileItem
+                    label="Admission Date"
+                    value={formatDate(
+                      viewStudent.admissionDate
+                    )}
+                  />
 
-                  <div className="profile-item">
-                    <label>
-                      Admission Number
-                    </label>
+                  <ProfileItem
+                    label="Session"
+                    value={
+                      viewStudent.session
+                    }
+                  />
 
-                    <strong>
-                      {viewStudent.admissionNo ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                  <ProfileItem
+                    label="Previous School"
+                    value={
+                      viewStudent.previousSchool
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>
-                      Admission Date
-                    </label>
+                  <ProfileItem
+                    label="Receipt Number"
+                    value={
+                      viewStudent.receiptNo
+                    }
+                  />
 
-                    <strong>
-                      {viewStudent.admissionDate ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                </ProfileGrid>
 
-                </div>
-              </div>
+              </ProfileSection>
 
               {/* ACADEMIC */}
 
-              <div className="profile-section">
+              <ProfileSection
+                icon="🏫"
+                title="Academic Information"
+                subtitle="Current academic details"
+              >
 
-                <div className="profile-section-title">
-                  <span>🏫</span>
+                <ProfileGrid>
 
-                  <div>
-                    <h3>
-                      Academic Information
-                    </h3>
+                  <ProfileItem
+                    label="Class"
+                    value={
+                      viewStudent.className
+                    }
+                  />
 
-                    <p>
-                      Current academic details
-                    </p>
-                  </div>
-                </div>
+                  <ProfileItem
+                    label="Section"
+                    value={
+                      viewStudent.section
+                    }
+                  />
 
-                <div className="profile-grid">
+                  <ProfileItem
+                    label="Roll Number"
+                    value={
+                      viewStudent.roll
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>Class</label>
+                  <ProfileItem
+                    label="Status"
+                    value={
+                      viewStudent.status
+                    }
+                  />
 
-                    <strong>
-                      Class{" "}
-                      {viewStudent.className}
-                    </strong>
-                  </div>
+                </ProfileGrid>
 
-                  <div className="profile-item">
-                    <label>Section</label>
+              </ProfileSection>
 
-                    <strong>
-                      Section{" "}
-                      {viewStudent.section}
-                    </strong>
-                  </div>
+              {/* IDENTITY */}
 
-                  <div className="profile-item">
-                    <label>Roll Number</label>
+              <ProfileSection
+                icon="🪪"
+                title="Identity Information"
+                subtitle="Government identity details"
+              >
 
-                    <strong>
-                      {viewStudent.roll}
-                    </strong>
-                  </div>
+                <ProfileGrid>
 
-                  <div className="profile-item">
-                    <label>Status</label>
+                  <ProfileItem
+                    label="Aadhaar Number"
+                    value={
+                      viewStudent.aadhaar
+                    }
+                  />
 
-                    <span className="active">
-                      {viewStudent.status}
-                    </span>
-                  </div>
+                  <ProfileItem
+                    label="PAN Number"
+                    value={
+                      viewStudent.pan
+                    }
+                  />
 
-                </div>
-              </div>
+                  <ProfileItem
+                    label="PEN Number"
+                    value={
+                      viewStudent.penNo
+                    }
+                  />
+
+                </ProfileGrid>
+
+              </ProfileSection>
 
               {/* CONTACT */}
 
-              <div className="profile-section">
+              <ProfileSection
+                icon="📱"
+                title="Contact Information"
+                subtitle="Parent and student contact details"
+              >
 
-                <div className="profile-section-title">
-                  <span>📱</span>
+                <ProfileGrid>
 
-                  <div>
-                    <h3>
-                      Contact Information
-                    </h3>
+                  <ProfileItem
+                    label="Parent Mobile"
+                    value={
+                      viewStudent.mobile
+                    }
+                  />
 
-                    <p>
-                      Parent contact details
-                    </p>
-                  </div>
-                </div>
+                  <ProfileItem
+                    label="Alternate Mobile"
+                    value={
+                      viewStudent.alternateMobile
+                    }
+                  />
 
-                <div className="profile-grid">
+                  <ProfileItem
+                    label="Email"
+                    value={
+                      viewStudent.email
+                    }
+                  />
 
-                  <div className="profile-item">
-                    <label>
-                      Parent Mobile
-                    </label>
+                  <ProfileItem
+                    label="Address"
+                    value={
+                      viewStudent.address
+                    }
+                    full
+                  />
 
-                    <strong>
-                      {viewStudent.mobile ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                </ProfileGrid>
 
-                  <div className="profile-item">
-                    <label>
-                      Alternate Mobile
-                    </label>
+              </ProfileSection>
 
-                    <strong>
-                      {viewStudent.alternateMobile ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+              {/* RECORD */}
 
-                  <div className="profile-item profile-full">
-                    <label>
-                      Address
-                    </label>
+              <ProfileSection
+                icon="⚙️"
+                title="Record Information"
+                subtitle="Student record details"
+              >
 
-                    <strong>
-                      {viewStudent.address ||
-                        "Not provided"}
-                    </strong>
-                  </div>
+                <ProfileGrid>
 
-                </div>
-              </div>
+                  <ProfileItem
+                    label="Student ID"
+                    value={
+                      viewStudent.id
+                    }
+                  />
 
-              {/* OVERVIEW */}
+                  <ProfileItem
+                    label="Created At"
+                    value={formatDateTime(
+                      viewStudent.createdAt
+                    )}
+                  />
 
-              <div className="profile-section">
+                  <ProfileItem
+                    label="Updated At"
+                    value={formatDateTime(
+                      viewStudent.updatedAt
+                    )}
+                  />
 
-                <div className="profile-section-title">
-                  <span>📊</span>
+                </ProfileGrid>
 
-                  <div>
-                    <h3>
-                      Student Overview
-                    </h3>
-
-                    <p>
-                      Quick academic overview
-                    </p>
-                  </div>
-                </div>
-
-                <div className="overview-cards">
-
-                  <div className="overview-card">
-                    <span>📅</span>
-
-                    <div>
-                      <small>
-                        Attendance
-                      </small>
-
-                      <strong>
-                        92%
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="overview-card">
-                    <span>💰</span>
-
-                    <div>
-                      <small>
-                        Fees Status
-                      </small>
-
-                      <strong>
-                        Paid
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="overview-card">
-                    <span>📝</span>
-
-                    <div>
-                      <small>
-                        Average Marks
-                      </small>
-
-                      <strong>
-                        78%
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="overview-card">
-                    <span>🏆</span>
-
-                    <div>
-                      <small>
-                        Performance
-                      </small>
-
-                      <strong>
-                        Good
-                      </strong>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
+              </ProfileSection>
 
             </div>
 
@@ -1332,13 +2603,28 @@ function Students() {
 
               <button
                 type="button"
+                className="print-student-btn"
+                onClick={() =>
+                  printStudent(
+                    viewStudent
+                  )
+                }
+              >
+                🖨️ Print Student
+              </button>
+
+              <button
+                type="button"
                 className="save-btn"
                 onClick={() => {
-                  const student = viewStudent;
+                  const student =
+                    viewStudent;
 
                   setViewStudent(null);
 
-                  openEditForm(student);
+                  openEditForm(
+                    student
+                  );
                 }}
               >
                 ✏️ Edit Student
@@ -1347,8 +2633,92 @@ function Students() {
             </div>
 
           </div>
+
         </div>
       )}
+
+    </div>
+  );
+}
+
+// =====================================================
+// PROFILE SECTION COMPONENT
+// =====================================================
+
+function ProfileSection({
+  icon,
+  title,
+  subtitle,
+  children,
+}) {
+  return (
+    <div className="profile-section">
+
+      <div className="profile-section-title">
+
+        <span>
+          {icon}
+        </span>
+
+        <div>
+
+          <h3>
+            {title}
+          </h3>
+
+          <p>
+            {subtitle}
+          </p>
+
+        </div>
+
+      </div>
+
+      {children}
+
+    </div>
+  );
+}
+
+// =====================================================
+// PROFILE GRID
+// =====================================================
+
+function ProfileGrid({ children }) {
+  return (
+    <div className="profile-grid">
+      {children}
+    </div>
+  );
+}
+
+// =====================================================
+// PROFILE ITEM
+// =====================================================
+
+function ProfileItem({
+  label,
+  value,
+  full = false,
+}) {
+  return (
+    <div
+      className={`profile-item ${
+        full
+          ? "profile-full"
+          : ""
+      }`}
+    >
+
+      <label>
+        {label}
+      </label>
+
+      <strong>
+        {value ||
+          "Not Provided"}
+      </strong>
+
     </div>
   );
 }

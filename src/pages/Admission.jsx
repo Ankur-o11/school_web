@@ -1,134 +1,373 @@
-import React, { useState } from "react";
+
+import React, { useEffect, useMemo, useState } from "react";
+import "../Style/admission.css";
+
+const API = "http://localhost:5000";
+
+const classes = [
+  "Nursery",
+  "LKG",
+  "UKG",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+];
+
+const sessions = ["2026-27", "2027-28", "2028-29"];
+
+const emptyForm = {
+  session: "2026-27",
+  admissionType: "New",
+  studentName: "",
+  dob: "",
+  gender: "",
+  bloodGroup: "",
+  className: "",
+  section: "",
+  fatherName: "",
+  motherName: "",
+  phone: "",
+  alternateMobile: "",
+  email: "",
+  address: "",
+  previousSchool: "",
+  aadhaar: "",
+  penNo: "",
+  admissionDate: new Date().toISOString().split("T")[0],
+  admissionNo: "",
+  receiptNo: "",
+  rollNo: "",
+};
 
 function Admission() {
-  const [formData, setFormData] = useState({
-    studentName: "",
-    dob: "",
-    gender: "",
-    className: "",
-    fatherName: "",
-    motherName: "",
-    phone: "",
-    email: "",
-    address: "",
-    previousSchool: "",
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [successStudent, setSuccessStudent] = useState(null);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const schoolName = useMemo(() => {
+    if (["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5"].includes(formData.className)) {
+      return "MAHARANA PRATAP SCIENCE ACADEMY UCCHATAR MADHIMIK JALAUN";
+    }
+
+    return "MAHARANA PRATAP SCIENCE ACADEMY INTER COLLEGE JALAUN";
+  }, [formData.className]);
+
+  const isPrimary = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5"].includes(
+    formData.className
+  );
+
+  useEffect(() => {
+    loadNextReceipt();
+  }, []);
+
+  const loadNextReceipt = async () => {
+    try {
+      setReceiptLoading(true);
+
+      const response = await fetch(`${API}/api/admissions/next-receipt`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setFormData((prev) => ({
+          ...prev,
+          receiptNo: data.receiptNo,
+        }));
+      }
+    } catch (error) {
+      console.error("Receipt loading error:", error);
+    } finally {
+      setReceiptLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const resetForm = async () => {
+    setFormData({
+      ...emptyForm,
+      session: "2026-27",
+      admissionDate: new Date().toISOString().split("T")[0],
+    });
+
+    await loadNextReceipt();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    alert("Admission form submitted successfully!");
+    if (
+      !formData.studentName.trim() ||
+      !formData.fatherName.trim() ||
+      !formData.motherName.trim() ||
+      !formData.dob ||
+      !formData.gender ||
+      !formData.className ||
+      !formData.section ||
+      !formData.phone.trim() ||
+      !formData.address.trim() ||
+      !formData.admissionDate
+    ) {
+      alert("Please fill all required fields.");
+      return;
+    }
 
-    console.log(formData);
+    try {
+      setSaving(true);
+
+      const studentData = {
+        name: formData.studentName.trim(),
+        father: formData.fatherName.trim(),
+        mother: formData.motherName.trim(),
+
+        dob: formData.dob,
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+
+        aadhaar: formData.aadhaar.trim(),
+        penNo: formData.penNo.trim(),
+
+        admissionNo: formData.admissionNo.trim(),
+        admissionDate: formData.admissionDate,
+
+        session: formData.session,
+        admissionType: formData.admissionType,
+
+        class: formData.className,
+        section: formData.section,
+        rollNo: formData.rollNo.trim(),
+
+        mobile: formData.phone.trim(),
+        alternateMobile: formData.alternateMobile.trim(),
+
+        email: formData.email.trim(),
+        address: formData.address.trim(),
+        previousSchool: formData.previousSchool.trim(),
+
+        receiptNo: formData.receiptNo,
+
+        status: "Active",
+      };
+
+      const response = await fetch(`${API}/api/students`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(studentData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Admission failed");
+      }
+
+      setSuccessStudent(data.student);
+
+      alert(
+        `Admission successful!\n\nStudent: ${data.student.name}\nReceipt No: ${data.student.receiptNo}`
+      );
+
+      await resetForm();
+    } catch (error) {
+      console.error("Admission error:", error);
+
+      alert(
+        error.message ||
+          "Unable to save admission. Please check backend server."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="content-card">
+    <div className="admission-page">
 
-      {/* HEADER */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "15px",
-          marginBottom: "25px",
-        }}
-      >
-        <span style={{ fontSize: "38px" }}>🎓</span>
+      {/* SCHOOL HEADER */}
+      <div className="admission-school-header">
+
+        <div className="school-emblem">🎓</div>
 
         <div>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "28px",
-              color: "#172033",
-            }}
-          >
-            Student Admissions
-          </h1>
+          <h1>{schoolName}</h1>
 
-          <p
-            style={{
-              marginTop: "5px",
-              color: "#718096",
-            }}
-          >
-            Manage new student admissions from here.
+          <p>
+            NEW ADMISSION FORM
           </p>
+
+          <span>
+            Session {formData.session}
+          </span>
         </div>
+
       </div>
 
-      {/* FORM CARD */}
-      <div
-        style={{
-          background: "#ffffff",
-          border: "1px solid #e7ebf2",
-          borderRadius: "15px",
-          padding: "30px",
-        }}
-      >
+      {/* TOP INFO */}
+      <div className="admission-top-bar">
 
-        <h2
-          style={{
-            marginBottom: "25px",
-            color: "#172033",
-          }}
-        >
-          New Admission Form
-        </h2>
+        <div>
+          <span>Form Type</span>
+          <strong>Student Admission</strong>
+        </div>
 
-        <form onSubmit={handleSubmit}>
+        <div>
+          <span>Admission Type</span>
+          <strong
+            className={
+              formData.admissionType === "New"
+                ? "new-badge"
+                : "old-badge"
+            }
+          >
+            {formData.admissionType} Student
+          </strong>
+        </div>
 
-          {/* STUDENT INFORMATION */}
-          <h3 style={sectionTitle}>
-            Student Information
-          </h3>
+        <div>
+          <span>Receipt No.</span>
+          <strong>
+            {receiptLoading
+              ? "Generating..."
+              : formData.receiptNo || "Auto"}
+          </strong>
+        </div>
 
-          <div style={grid}>
+      </div>
+
+      {/* FORM */}
+      <form onSubmit={handleSubmit}>
+
+        {/* SESSION */}
+        <section className="admission-card">
+
+          <div className="section-heading">
+            <div className="section-icon">📅</div>
 
             <div>
-              <label style={label}>Student Name *</label>
+              <h2>Admission Session & Type</h2>
+              <p>Select academic session and admission category</p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+
+            <div className="form-field">
+              <label>Academic Session *</label>
+
+              <select
+                name="session"
+                value={formData.session}
+                onChange={handleChange}
+              >
+                {sessions.map((session) => (
+                  <option key={session} value={session}>
+                    {session}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Student Type *</label>
+
+              <select
+                name="admissionType"
+                value={formData.admissionType}
+                onChange={handleChange}
+              >
+                <option value="New">New Student</option>
+                <option value="Old">Old Student</option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Admission Date *</label>
 
               <input
-                style={input}
+                type="date"
+                name="admissionDate"
+                value={formData.admissionDate}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Receipt Number</label>
+
+              <input
+                type="text"
+                name="receiptNo"
+                value={formData.receiptNo}
+                readOnly
+                className="readonly-field"
+              />
+            </div>
+
+          </div>
+        </section>
+
+        {/* STUDENT INFORMATION */}
+        <section className="admission-card">
+
+          <div className="section-heading">
+            <div className="section-icon">👨‍🎓</div>
+
+            <div>
+              <h2>Student Information</h2>
+              <p>Enter complete student personal information</p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+
+            <div className="form-field">
+              <label>Student Name *</label>
+
+              <input
                 type="text"
                 name="studentName"
                 value={formData.studentName}
                 onChange={handleChange}
-                placeholder="Enter student name"
-                required
+                placeholder="Enter student's full name"
               />
             </div>
 
-            <div>
-              <label style={label}>Date of Birth *</label>
+            <div className="form-field">
+              <label>Date of Birth *</label>
 
               <input
-                style={input}
                 type="date"
                 name="dob"
                 value={formData.dob}
                 onChange={handleChange}
-                required
               />
             </div>
 
-            <div>
-              <label style={label}>Gender *</label>
+            <div className="form-field">
+              <label>Gender *</label>
 
               <select
-                style={input}
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                required
               >
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
@@ -137,91 +376,156 @@ function Admission() {
               </select>
             </div>
 
-            <div>
-              <label style={label}>Applying For Class *</label>
+            <div className="form-field">
+              <label>Blood Group</label>
 
               <select
-                style={input}
-                name="className"
-                value={formData.className}
+                name="bloodGroup"
+                value={formData.bloodGroup}
                 onChange={handleChange}
-                required
               >
-                <option value="">Select Class</option>
-                <option value="Nursery">Nursery</option>
-                <option value="LKG">LKG</option>
-                <option value="UKG">UKG</option>
-                <option value="1">Class 1</option>
-                <option value="2">Class 2</option>
-                <option value="3">Class 3</option>
-                <option value="4">Class 4</option>
-                <option value="5">Class 5</option>
-                <option value="6">Class 6</option>
-                <option value="7">Class 7</option>
-                <option value="8">Class 8</option>
-                <option value="9">Class 9</option>
-                <option value="10">Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
               </select>
             </div>
 
-          </div>
+            <div className="form-field">
+              <label>Class *</label>
 
-          {/* PARENT INFORMATION */}
-          <h3 style={sectionTitle}>
-            Parent / Guardian Information
-          </h3>
+              <select
+                name="className"
+                value={formData.className}
+                onChange={handleChange}
+              >
+                <option value="">Select Class</option>
 
-          <div style={grid}>
+                {classes.map((item) => (
+                  <option key={item} value={item}>
+                    {item === "Nursery" ||
+                    item === "LKG" ||
+                    item === "UKG"
+                      ? item
+                      : `Class ${item}`}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <div>
-              <label style={label}>Father's Name *</label>
+            <div className="form-field">
+              <label>Section *</label>
+
+              <select
+                name="section"
+                value={formData.section}
+                onChange={handleChange}
+              >
+                <option value="">Select Section</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Roll Number</label>
 
               <input
-                style={input}
+                type="text"
+                name="rollNo"
+                value={formData.rollNo}
+                onChange={handleChange}
+                placeholder="Enter roll number"
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Admission Number</label>
+
+              <input
+                type="text"
+                name="admissionNo"
+                value={formData.admissionNo}
+                onChange={handleChange}
+                placeholder="e.g. MPSA-2026-001"
+              />
+            </div>
+
+          </div>
+        </section>
+
+        {/* PARENT */}
+        <section className="admission-card">
+
+          <div className="section-heading">
+            <div className="section-icon">👨‍👩‍👦</div>
+
+            <div>
+              <h2>Parent / Guardian Information</h2>
+              <p>Enter parent and contact details</p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+
+            <div className="form-field">
+              <label>Father's Name *</label>
+
+              <input
                 type="text"
                 name="fatherName"
                 value={formData.fatherName}
                 onChange={handleChange}
                 placeholder="Enter father's name"
-                required
               />
             </div>
 
-            <div>
-              <label style={label}>Mother's Name *</label>
+            <div className="form-field">
+              <label>Mother's Name *</label>
 
               <input
-                style={input}
                 type="text"
                 name="motherName"
                 value={formData.motherName}
                 onChange={handleChange}
                 placeholder="Enter mother's name"
-                required
               />
             </div>
 
-            <div>
-              <label style={label}>Mobile Number *</label>
+            <div className="form-field">
+              <label>Mobile Number *</label>
 
               <input
-                style={input}
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="Enter mobile number"
-                required
               />
             </div>
 
-            <div>
-              <label style={label}>Email Address</label>
+            <div className="form-field">
+              <label>Alternate Mobile</label>
 
               <input
-                style={input}
+                type="tel"
+                name="alternateMobile"
+                value={formData.alternateMobile}
+                onChange={handleChange}
+                placeholder="Enter alternate mobile"
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Email Address</label>
+
+              <input
                 type="email"
                 name="email"
                 value={formData.email}
@@ -231,34 +535,78 @@ function Admission() {
             </div>
 
           </div>
+        </section>
 
-          {/* ADDRESS */}
-          <h3 style={sectionTitle}>
-            Address & Previous School
-          </h3>
+        {/* IDENTITY */}
+        <section className="admission-card">
 
-          <div style={{ marginBottom: "20px" }}>
-            <label style={label}>Complete Address *</label>
+          <div className="section-heading">
+            <div className="section-icon">🪪</div>
+
+            <div>
+              <h2>Identity Information</h2>
+              <p>Government and school identification details</p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+
+            <div className="form-field">
+              <label>Aadhaar Number</label>
+
+              <input
+                type="text"
+                name="aadhaar"
+                value={formData.aadhaar}
+                onChange={handleChange}
+                placeholder="Enter Aadhaar number"
+                maxLength="12"
+              />
+            </div>
+
+            <div className="form-field">
+              <label>PEN Number</label>
+
+              <input
+                type="text"
+                name="penNo"
+                value={formData.penNo}
+                onChange={handleChange}
+                placeholder="Enter PEN number"
+              />
+            </div>
+
+          </div>
+        </section>
+
+        {/* ADDRESS */}
+        <section className="admission-card">
+
+          <div className="section-heading">
+            <div className="section-icon">🏠</div>
+
+            <div>
+              <h2>Address & Previous School</h2>
+              <p>Enter residential and previous academic details</p>
+            </div>
+          </div>
+
+          <div className="form-field full-field">
+            <label>Complete Address *</label>
 
             <textarea
-              style={{
-                ...input,
-                minHeight: "100px",
-                resize: "vertical",
-              }}
               name="address"
               value={formData.address}
               onChange={handleChange}
-              placeholder="Enter complete address"
-              required
+              placeholder="Enter complete residential address"
+              rows="4"
             />
           </div>
 
-          <div style={{ marginBottom: "25px" }}>
-            <label style={label}>Previous School</label>
+          <div className="form-field full-field">
+            <label>Previous School</label>
 
             <input
-              style={input}
               type="text"
               name="previousSchool"
               value={formData.previousSchool}
@@ -267,61 +615,71 @@ function Admission() {
             />
           </div>
 
-          {/* BUTTON */}
+        </section>
+
+        {/* ACTIONS */}
+        <div className="admission-actions">
+
           <button
-            type="submit"
-            style={{
-              background: "#2563eb",
-              color: "#ffffff",
-              border: "none",
-              padding: "13px 25px",
-              borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}
+            type="button"
+            className="reset-admission-btn"
+            onClick={resetForm}
           >
-            🎓 Submit Admission
+            ↻ Reset Form
           </button>
 
-        </form>
-      </div>
+          <button
+            type="submit"
+            className="submit-admission-btn"
+            disabled={saving}
+          >
+            {saving ? "Saving Admission..." : "🎓 Save New Admission"}
+          </button>
+
+        </div>
+
+      </form>
+
+      {/* SUCCESS */}
+      {successStudent && (
+        <div className="success-box">
+
+          <div className="success-icon">✓</div>
+
+          <div>
+            <h3>Admission Saved Successfully</h3>
+
+            <p>
+              <strong>{successStudent.name}</strong> has been added to
+              the Students database.
+            </p>
+
+            <div className="success-details">
+              <span>
+                Receipt: <strong>{successStudent.receiptNo}</strong>
+              </span>
+
+              <span>
+                Class:{" "}
+                <strong>
+                  {successStudent.class}-{successStudent.section}
+                </strong>
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSuccessStudent(null)}
+          >
+            ✕
+          </button>
+
+        </div>
+      )}
+
     </div>
   );
 }
-
-
-/* STYLES */
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "20px",
-  marginBottom: "25px",
-};
-
-const label = {
-  display: "block",
-  marginBottom: "8px",
-  fontWeight: "600",
-  color: "#374151",
-};
-
-const input = {
-  width: "100%",
-  padding: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "8px",
-  fontSize: "15px",
-  boxSizing: "border-box",
-  outline: "none",
-};
-
-const sectionTitle = {
-  marginBottom: "20px",
-  paddingBottom: "10px",
-  borderBottom: "1px solid #e5e7eb",
-  color: "#1e3a8a",
-};
 
 export default Admission;

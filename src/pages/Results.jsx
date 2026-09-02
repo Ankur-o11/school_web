@@ -1,346 +1,733 @@
 import React, { useEffect, useMemo, useState } from "react";
+import "../Style/Results.css";
 
 const API_URL = "http://localhost:5000";
+const EXAM_STORAGE_KEY = "mpsa_results_exams";
+const SESSION = "2026-27";
 
-const EXAMS = ["Exam 1", "Exam 2", "Exam 3"];
+const DEFAULT_EXAMS = [
+  {
+    id: "exam-1",
+    name: "Exam 1",
+    internalMax: 30,
+    externalMax: 70,
+  },
+  {
+    id: "exam-2",
+    name: "Exam 2",
+    internalMax: 30,
+    externalMax: 70,
+  },
+  {
+    id: "exam-3",
+    name: "Exam 3",
+    internalMax: 30,
+    externalMax: 70,
+  },
+];
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const naturalSort = (a, b) =>
+  String(a).localeCompare(String(b), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+
+const getGrade = (percentage) => {
+  if (percentage >= 90) return "A+";
+  if (percentage >= 80) return "A";
+  if (percentage >= 70) return "B+";
+  if (percentage >= 60) return "B";
+  if (percentage >= 50) return "C";
+  if (percentage >= 40) return "D";
+  return "F";
+};
+
+const getStudentId = (student) =>
+  student?.id || student?._id || "";
+
+const getStudentClass = (student) =>
+  student?.class ||
+  student?.className ||
+  student?.standard ||
+  "";
+
+const getStudentSection = (student) =>
+  student?.section || "";
+
+const getStudentRoll = (student) =>
+  student?.rollNo ||
+  student?.rollNumber ||
+  student?.roll ||
+  "-";
+
+const getFatherName = (student) =>
+  student?.father ||
+  student?.fatherName ||
+  "-";
+
+const getSubjectName = (subject) => {
+  if (typeof subject === "string") return subject;
+
+  return (
+    subject?.name ||
+    subject?.subjectName ||
+    subject?.title ||
+    subject?.subject ||
+    ""
+  );
+};
+
+const getSubjectClass = (subject) =>
+  subject?.class ||
+  subject?.className ||
+  subject?.classId ||
+  subject?.standard ||
+  subject?.grade ||
+  "";
+
+const getSubjectSection = (subject) =>
+  subject?.section ||
+  subject?.sectionName ||
+  "";
+
+const getTeacherName = (subject) => {
+  if (typeof subject === "string") return "";
+
+  if (typeof subject?.teacher === "object") {
+    return (
+      subject.teacher?.name ||
+      subject.teacher?.teacherName ||
+      ""
+    );
+  }
+
+  return (
+    subject?.teacherName ||
+    subject?.teacher ||
+    subject?.assignedTeacher ||
+    ""
+  );
+};
+
+const parseListResponse = (data, key) => {
+  if (Array.isArray(data)) return data;
+  return data?.[key] || data?.data || [];
+};
+
+/* =========================================================
+   MAIN RESULTS COMPONENT
+========================================================= */
 
 const Results = () => {
   const [students, setStudents] = useState([]);
   const [results, setResults] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [exams, setExams] = useState([]);
 
   const [search, setSearch] = useState("");
+  const [classFilter, setClassFilter] = useState("All");
+  const [sectionFilter, setSectionFilter] = useState("All");
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedExam, setSelectedExam] = useState("");
+  const [marks, setMarks] = useState({});
+
   const [loading, setLoading] = useState(true);
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const [selectedStudent, setSelectedStudent] =
-    useState(null);
-
-  const [selectedExam, setSelectedExam] =
-    useState("Exam 1");
-
   const [showView, setShowView] = useState(false);
   const [viewResult, setViewResult] = useState(null);
 
-  const [marks, setMarks] = useState({});
+  const [showExamModal, setShowExamModal] = useState(false);
+  const [editingExam, setEditingExam] = useState(null);
 
-  // =====================================================
-  // LOAD DATA
-  // =====================================================
+  const [showReport, setShowReport] = useState(false);
+  const [reportType, setReportType] = useState("class");
+  const [reportClass, setReportClass] = useState("All");
+  const [reportSection, setReportSection] = useState("All");
+  const [reportLimit, setReportLimit] = useState("10");
+
+  const [examForm, setExamForm] = useState({
+    name: "",
+    internalMax: 30,
+    externalMax: 70,
+  });
+
+  /* =========================================================
+     INITIAL LOAD
+  ========================================================= */
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
+    loadExams();
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadInitialData = async () => {
+    setLoading(true);
+    setError("");
 
-      const [studentsResponse, resultsResponse] =
+    try {
+      const [studentsRes, resultsRes, subjectsRes] =
         await Promise.all([
           fetch(`${API_URL}/api/students`),
           fetch(`${API_URL}/api/results`),
+          fetch(`${API_URL}/api/subjects`),
         ]);
 
-      if (!studentsResponse.ok) {
-        throw new Error("Students load failed");
+      if (studentsRes.ok) {
+        const data = await studentsRes.json();
+        setStudents(parseListResponse(data, "students"));
       }
 
-      const studentsData =
-        await studentsResponse.json();
+      if (resultsRes.ok) {
+        const data = await resultsRes.json();
+        setResults(parseListResponse(data, "results"));
+      }
 
-      const resultsData = resultsResponse.ok
-        ? await resultsResponse.json()
-        : [];
-
-      setStudents(
-        Array.isArray(studentsData)
-          ? studentsData
-          : studentsData.students || []
-      );
-
-      setResults(
-        Array.isArray(resultsData)
-          ? resultsData
-          : []
-      );
+      if (subjectsRes.ok) {
+        const data = await subjectsRes.json();
+        setSubjects(parseListResponse(data, "subjects"));
+      }
     } catch (err) {
       console.error(err);
-      setError(
-        "Students ya results load nahi ho pa rahe hain."
-      );
+      setError("Backend server se data load nahi ho pa raha.");
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================================
-  // SEARCH
-  // =====================================================
+  /* =========================================================
+     EXAMS
+  ========================================================= */
 
-  const filteredStudents = useMemo(() => {
-    const value = search
-      .trim()
-      .toLowerCase();
+  const loadExams = () => {
+    try {
+      const saved = localStorage.getItem(EXAM_STORAGE_KEY);
 
-    if (!value) {
-      return students;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+
+        if (Array.isArray(parsed) && parsed.length) {
+          setExams(parsed);
+          setSelectedExam(parsed[0].name);
+          return;
+        }
+      }
+    } catch (err) {
+      console.error(err);
     }
 
-    return students.filter((student) => {
-      const name = String(
-        student.name || ""
-      ).toLowerCase();
+    localStorage.setItem(
+      EXAM_STORAGE_KEY,
+      JSON.stringify(DEFAULT_EXAMS)
+    );
 
-      const roll = String(
-        student.rollNo ||
-          student.rollNumber ||
-          student.roll ||
-          ""
-      ).toLowerCase();
+    setExams(DEFAULT_EXAMS);
+    setSelectedExam(DEFAULT_EXAMS[0].name);
+  };
 
-      const admission = String(
-        student.admissionNo || ""
-      ).toLowerCase();
+  const saveExams = (newExams) => {
+    setExams(newExams);
+    localStorage.setItem(
+      EXAM_STORAGE_KEY,
+      JSON.stringify(newExams)
+    );
+  };
 
-      return (
-        name.includes(value) ||
-        roll.includes(value) ||
-        admission.includes(value)
-      );
+  const openAddExam = () => {
+    setEditingExam(null);
+    setExamForm({
+      name: "",
+      internalMax: 30,
+      externalMax: 70,
     });
-  }, [students, search]);
+    setShowExamModal(true);
+  };
 
-  // =====================================================
-  // SELECT STUDENT
-  // =====================================================
+  const openEditExam = (exam) => {
+    setEditingExam(exam);
+
+    setExamForm({
+      name: exam.name,
+      internalMax: exam.internalMax,
+      externalMax: exam.externalMax,
+    });
+
+    setShowExamModal(true);
+  };
+
+  const saveExam = () => {
+    const name = examForm.name.trim();
+    const internalMax = Number(examForm.internalMax);
+    const externalMax = Number(examForm.externalMax);
+
+    if (!name) {
+      setError("Exam name enter karo.");
+      return;
+    }
+
+    if (internalMax < 0 || externalMax < 0) {
+      setError("Marks 0 se kam nahi ho sakte.");
+      return;
+    }
+
+    if (internalMax + externalMax <= 0) {
+      setError("Total marks 0 nahi ho sakte.");
+      return;
+    }
+
+    const duplicate = exams.some(
+      (exam) =>
+        exam.name.toLowerCase() === name.toLowerCase() &&
+        (!editingExam || exam.id !== editingExam.id)
+    );
+
+    if (duplicate) {
+      setError("Ye exam already added hai.");
+      return;
+    }
+
+    let updated;
+
+    if (editingExam) {
+      updated = exams.map((exam) =>
+        exam.id === editingExam.id
+          ? {
+              ...exam,
+              name,
+              internalMax,
+              externalMax,
+            }
+          : exam
+      );
+
+      if (selectedExam === editingExam.name) {
+        setSelectedExam(name);
+      }
+
+      setMessage("Exam updated successfully.");
+    } else {
+      const newExam = {
+        id: `exam-${Date.now()}`,
+        name,
+        internalMax,
+        externalMax,
+      };
+
+      updated = [...exams, newExam];
+      setSelectedExam(name);
+      setMessage("New exam added successfully.");
+    }
+
+    saveExams(updated);
+    setShowExamModal(false);
+    setError("");
+  };
+
+  const deleteExam = (exam) => {
+    if (exams.length <= 1) {
+      setError("Kam se kam ek exam hona chahiye.");
+      return;
+    }
+
+    if (!window.confirm(`"${exam.name}" delete karna hai?`)) {
+      return;
+    }
+
+    const updated = exams.filter(
+      (item) => item.id !== exam.id
+    );
+
+    saveExams(updated);
+
+    if (selectedExam === exam.name) {
+      setSelectedExam(updated[0]?.name || "");
+    }
+
+    setMessage("Exam deleted successfully.");
+  };
+
+  const currentExam = useMemo(
+    () =>
+      exams.find((exam) => exam.name === selectedExam) || {
+        name: selectedExam,
+        internalMax: 30,
+        externalMax: 70,
+      },
+    [exams, selectedExam]
+  );
+
+  /* =========================================================
+     CLASS / SECTION FILTERS
+  ========================================================= */
+
+  const classList = useMemo(() => {
+    const values = students
+      .map(getStudentClass)
+      .filter(Boolean);
+
+    return [
+      "All",
+      ...Array.from(new Set(values)).sort(naturalSort),
+    ];
+  }, [students]);
+
+  const sectionList = useMemo(() => {
+    const filtered =
+      reportClass === "All"
+        ? students
+        : students.filter(
+            (student) =>
+              String(getStudentClass(student)) ===
+              String(reportClass)
+          );
+
+    const values = filtered
+      .map(getStudentSection)
+      .filter(Boolean);
+
+    return [
+      "All",
+      ...Array.from(new Set(values)).sort(naturalSort),
+    ];
+  }, [students, reportClass]);
+
+  const studentSectionList = useMemo(() => {
+    const filtered =
+      classFilter === "All"
+        ? students
+        : students.filter(
+            (student) =>
+              String(getStudentClass(student)) ===
+              String(classFilter)
+          );
+
+    const values = filtered
+      .map(getStudentSection)
+      .filter(Boolean);
+
+    return [
+      "All",
+      ...Array.from(new Set(values)).sort(naturalSort),
+    ];
+  }, [students, classFilter]);
+
+  /* =========================================================
+     STUDENT FILTER
+  ========================================================= */
+
+  const filteredStudents = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return [...students]
+      .filter((student) => {
+        const name = String(student.name || "").toLowerCase();
+        const roll = String(getStudentRoll(student)).toLowerCase();
+        const admission = String(
+          student.admissionNo || ""
+        ).toLowerCase();
+
+        const searchMatch =
+          !query ||
+          name.includes(query) ||
+          roll.includes(query) ||
+          admission.includes(query);
+
+        const classMatch =
+          classFilter === "All" ||
+          String(getStudentClass(student)) ===
+            String(classFilter);
+
+        const sectionMatch =
+          sectionFilter === "All" ||
+          String(getStudentSection(student)) ===
+            String(sectionFilter);
+
+        return searchMatch && classMatch && sectionMatch;
+      })
+      .sort((a, b) =>
+        naturalSort(a.name || "", b.name || "")
+      );
+  }, [
+    students,
+    search,
+    classFilter,
+    sectionFilter,
+  ]);
+
+  /* =========================================================
+     SUBJECTS
+  ========================================================= */
+
+  const getSubjectsForStudent = async (student) => {
+    setSubjectsLoading(true);
+
+    try {
+      let list = subjects;
+
+      if (!list.length) {
+        const response = await fetch(
+          `${API_URL}/api/subjects`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          list = parseListResponse(data, "subjects");
+          setSubjects(list);
+        }
+      }
+
+      const studentClass = String(
+        getStudentClass(student)
+      )
+        .trim()
+        .toLowerCase();
+
+      const studentSection = String(
+        getStudentSection(student)
+      )
+        .trim()
+        .toLowerCase();
+
+      const matching = list.filter((subject) => {
+        const subjectClass = String(
+          getSubjectClass(subject)
+        )
+          .trim()
+          .toLowerCase();
+
+        const subjectSection = String(
+          getSubjectSection(subject)
+        )
+          .trim()
+          .toLowerCase();
+
+        if (!subjectClass) return true;
+
+        const classMatch =
+          subjectClass === studentClass ||
+          subjectClass.includes(studentClass) ||
+          studentClass.includes(subjectClass);
+
+        if (subjectSection) {
+          return (
+            classMatch &&
+            subjectSection === studentSection
+          );
+        }
+
+        return classMatch;
+      });
+
+      const unique = [];
+
+      matching.forEach((subject) => {
+        const name = getSubjectName(subject);
+
+        if (
+          name &&
+          !unique.some(
+            (item) =>
+              getSubjectName(item).toLowerCase() ===
+              name.toLowerCase()
+          )
+        ) {
+          unique.push(subject);
+        }
+      });
+
+      return unique;
+    } catch (err) {
+      console.error(err);
+      return [];
+    } finally {
+      setSubjectsLoading(false);
+    }
+  };
+
+  const createEmptyMarks = (subjectList) => {
+    const data = {};
+
+    subjectList.forEach((subject) => {
+      const name = getSubjectName(subject);
+
+      if (!name) return;
+
+      data[name] = {
+        internal: "",
+        external: "",
+        teacher: getTeacherName(subject),
+      };
+    });
+
+    return data;
+  };
+
+  const convertResultToMarks = (result, examName) => {
+    const data = {};
+    const examData = result?.exams?.[examName];
+
+    if (!examData) return data;
+
+    (examData.subjects || []).forEach((subject) => {
+      data[subject.name] = {
+        internal: subject.internal ?? "",
+        external: subject.external ?? "",
+        teacher: subject.teacher || "",
+      };
+    });
+
+    return data;
+  };
+
+  /* =========================================================
+     SELECT STUDENT
+  ========================================================= */
 
   const selectStudent = async (student) => {
     setSelectedStudent(student);
-    setSelectedExam("Exam 1");
     setShowView(false);
     setViewResult(null);
     setMessage("");
     setError("");
 
+    const subjectList =
+      await getSubjectsForStudent(student);
+
+    let savedMarks = {};
+
     try {
       const response = await fetch(
-        `${API_URL}/api/results/student/${student.id}`
+        `${API_URL}/api/results/student/${getStudentId(student)}`
       );
 
       if (response.ok) {
         const data = await response.json();
 
-        setMarks(
-          convertResultToMarks(
-            data,
-            "Exam 1"
-          )
-        );
-      } else {
-        const subjects =
-          await fetchSubjects(student.class);
-
-        setMarks(
-          createEmptyMarks(subjects)
+        savedMarks = convertResultToMarks(
+          data,
+          selectedExam
         );
       }
     } catch (err) {
       console.error(err);
-
-      const subjects =
-        await fetchSubjects(student.class);
-
-      setMarks(
-        createEmptyMarks(subjects)
-      );
     }
-  };
 
-  // =====================================================
-  // FETCH SUBJECTS
-  // =====================================================
-
-  const fetchSubjects = async (studentClass) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/api/results/subjects/${studentClass}`
-      );
-
-      if (!response.ok) {
-        return [];
-      }
-
-      const data = await response.json();
-
-      return data.subjects || [];
-    } catch {
-      return [];
-    }
-  };
-
-  // =====================================================
-  // EMPTY MARKS
-  // =====================================================
-
-  const createEmptyMarks = (subjects) => {
-    const object = {};
-
-    subjects.forEach((subject) => {
-      object[subject] = {
-        internal: "",
-        external: "",
-      };
+    setMarks({
+      ...createEmptyMarks(subjectList),
+      ...savedMarks,
     });
-
-    return object;
   };
 
-  // =====================================================
-  // CONVERT SAVED RESULT
-  // =====================================================
+  /* =========================================================
+     LOAD EXAM
+  ========================================================= */
 
-  const convertResultToMarks = (
-    result,
-    exam
-  ) => {
-    const object = {};
-
-    const examData =
-      result?.exams?.[exam];
-
-    if (!examData) {
-      return object;
-    }
-
-    examData.subjects?.forEach(
-      (subject) => {
-        object[subject.name] = {
-          internal:
-            subject.internal ?? "",
-          external:
-            subject.external ?? "",
-        };
-      }
-    );
-
-    return object;
-  };
-
-  // =====================================================
-  // LOAD EXAM
-  // =====================================================
-
-  const loadExam = async (exam) => {
-    setSelectedExam(exam);
+  const loadExam = async (examName) => {
+    setSelectedExam(examName);
     setMessage("");
     setError("");
 
-    if (!selectedStudent) {
-      return;
-    }
+    if (!selectedStudent) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/results/student/${selectedStudent.id}`
-      );
+      const [resultResponse, subjectList] =
+        await Promise.all([
+          fetch(
+            `${API_URL}/api/results/student/${getStudentId(
+              selectedStudent
+            )}`
+          ),
+          getSubjectsForStudent(selectedStudent),
+        ]);
 
-      if (response.ok) {
-        const data = await response.json();
+      let savedMarks = {};
 
-        const examMarks =
-          convertResultToMarks(
-            data,
-            exam
-          );
+      if (resultResponse.ok) {
+        const data = await resultResponse.json();
 
-        if (
-          Object.keys(examMarks).length > 0
-        ) {
-          setMarks(examMarks);
-          return;
-        }
+        savedMarks = convertResultToMarks(
+          data,
+          examName
+        );
       }
 
-      const subjects =
-        await fetchSubjects(
-          selectedStudent.class
-        );
-
-      setMarks(
-        createEmptyMarks(subjects)
-      );
+      setMarks({
+        ...createEmptyMarks(subjectList),
+        ...savedMarks,
+      });
     } catch (err) {
       console.error(err);
+      setMarks({});
     }
   };
 
-  // =====================================================
-  // MARK CHANGE
-  // =====================================================
+  /* =========================================================
+     MARKS
+  ========================================================= */
 
   const handleMarksChange = (
     subject,
     type,
     value
   ) => {
-    let finalValue = value;
-
     if (value !== "") {
       const number = Number(value);
 
-      if (type === "internal") {
-        finalValue = Math.min(
-          Math.max(number, 0),
-          30
-        );
-      }
+      if (Number.isNaN(number)) return;
 
-      if (type === "external") {
-        finalValue = Math.min(
-          Math.max(number, 0),
-          70
-        );
-      }
+      const max =
+        type === "internal"
+          ? Number(currentExam.internalMax)
+          : Number(currentExam.externalMax);
+
+      value = Math.min(Math.max(number, 0), max);
     }
 
-    setMarks((previous) => ({
-      ...previous,
+    setMarks((prev) => ({
+      ...prev,
       [subject]: {
-        ...(previous[subject] || {}),
-        [type]: finalValue,
+        ...(prev[subject] || {}),
+        [type]: value,
       },
     }));
   };
 
-  // =====================================================
-  // CURRENT TOTAL
-  // =====================================================
+  /* =========================================================
+     SUMMARY
+  ========================================================= */
 
   const currentSummary = useMemo(() => {
-    let total = 0;
-    let max = 0;
+    const internalMax =
+      Number(currentExam.internalMax) || 0;
 
-    Object.values(marks).forEach(
-      (subject) => {
-        const internal =
-          Number(subject.internal) || 0;
+    const externalMax =
+      Number(currentExam.externalMax) || 0;
 
-        const external =
-          Number(subject.external) || 0;
+    const subjectCount = Object.keys(marks).length;
 
-        total += internal + external;
-        max += 100;
-      }
+    const max =
+      subjectCount *
+      (internalMax + externalMax);
+
+    const total = Object.values(marks).reduce(
+      (sum, subject) =>
+        sum +
+        (Number(subject.internal) || 0) +
+        (Number(subject.external) || 0),
+      0
     );
 
     const percentage =
-      max > 0
-        ? (total / max) * 100
-        : 0;
+      max > 0 ? (total / max) * 100 : 0;
 
     return {
       total,
@@ -348,51 +735,55 @@ const Results = () => {
       percentage,
       grade: getGrade(percentage),
     };
-  }, [marks]);
+  }, [marks, currentExam]);
 
-  // =====================================================
-  // SAVE RESULT
-  // =====================================================
+  /* =========================================================
+     SAVE RESULT
+  ========================================================= */
 
   const saveResult = async () => {
     if (!selectedStudent) {
+      setError("Student select karo.");
+      return;
+    }
+
+    if (!selectedExam) {
+      setError("Exam select karo.");
       return;
     }
 
     setSaving(true);
-    setMessage("");
     setError("");
+    setMessage("");
 
     try {
-      const subjects = Object.entries(
-        marks
-      ).map(([name, value]) => ({
-        name,
-        internal:
-          Number(value.internal) || 0,
-        external:
-          Number(value.external) || 0,
-      }));
+      const subjectData = Object.entries(marks).map(
+        ([name, value]) => ({
+          name,
+          teacher: value.teacher || "",
+          internal: Number(value.internal) || 0,
+          external: Number(value.external) || 0,
+        })
+      );
 
       const response = await fetch(
         `${API_URL}/api/results/exam`,
         {
           method: "POST",
-
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
-
           body: JSON.stringify({
-            studentId:
-              selectedStudent.id,
-
+            studentId: getStudentId(selectedStudent),
             exam: selectedExam,
-
-            session: "2026-27",
-
-            subjects,
+            session: SESSION,
+            internalMax: Number(
+              currentExam.internalMax
+            ),
+            externalMax: Number(
+              currentExam.externalMax
+            ),
+            subjects: subjectData,
           }),
         }
       );
@@ -401,336 +792,505 @@ const Results = () => {
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Result save failed"
+          data.message || "Result save failed."
         );
       }
 
       setMessage(
-        `${selectedExam} saved successfully!`
+        `${selectedExam} saved successfully.`
       );
 
-      // Refresh results
-      const resultsResponse =
-        await fetch(
-          `${API_URL}/api/results`
-        );
+      await refreshResults();
 
-      if (resultsResponse.ok) {
+      const resultResponse = await fetch(
+        `${API_URL}/api/results/student/${getStudentId(
+          selectedStudent
+        )}`
+      );
+
+      if (resultResponse.ok) {
         const resultData =
-          await resultsResponse.json();
+          await resultResponse.json();
 
-        setResults(
-          Array.isArray(resultData)
-            ? resultData
-            : []
-        );
-      }
-
-      // Update view data
-      const studentResultResponse =
-        await fetch(
-          `${API_URL}/api/results/student/${selectedStudent.id}`
-        );
-
-      if (
-        studentResultResponse.ok
-      ) {
-        const studentResult =
-          await studentResultResponse.json();
-
-        setViewResult(studentResult);
+        setViewResult(resultData);
       }
     } catch (err) {
       console.error(err);
-
       setError(
-        err.message ||
-          "Result save nahi ho paya."
+        err.message || "Result save nahi ho paya."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  // =====================================================
-  // VIEW RESULT
-  // =====================================================
+  const refreshResults = async () => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/results`
+      );
 
-  const handleViewResult = async (
-    student
-  ) => {
+      if (!response.ok) return;
+
+      const data = await response.json();
+
+      setResults(parseListResponse(data, "results"));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getStudentResult = (studentId) =>
+    results.find(
+      (result) =>
+        String(result.studentId) ===
+        String(studentId)
+    );
+
+  /* =========================================================
+     VIEW RESULT
+  ========================================================= */
+
+  const handleViewResult = async (student) => {
     try {
       setError("");
       setMessage("");
 
       const response = await fetch(
-        `${API_URL}/api/results/student/${student.id}`
+        `${API_URL}/api/results/student/${getStudentId(student)}`
       );
 
       if (!response.ok) {
         setError(
-          "Is student ka result abhi save nahi hai."
+          "Is student ka result available nahi hai."
         );
         return;
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       setViewResult(data);
       setSelectedStudent(student);
       setShowView(true);
     } catch (err) {
       console.error(err);
-
-      setError(
-        "Result load nahi ho pa raha."
-      );
+      setError("Result load nahi ho pa raha.");
     }
   };
 
-  // =====================================================
-  // CHECK RESULT EXISTS
-  // =====================================================
+  /* =========================================================
+     REPORT
+  ========================================================= */
 
-  const getStudentResult = (
-    studentId
-  ) => {
-    return results.find(
-      (result) =>
-        result.studentId ===
-        studentId
-    );
+  const openReport = (type) => {
+    setReportType(type);
+    setReportClass(classFilter);
+    setReportSection(sectionFilter);
+    setReportLimit("10");
+    setShowReport(true);
   };
 
-  // =====================================================
-  // VIEW PAGE
-  // =====================================================
+  /* =========================================================
+     FULL RESULT VIEW
+  ========================================================= */
 
   if (showView && viewResult) {
     return (
       <ResultView
         result={viewResult}
-        onBack={() =>
-          setShowView(false)
-        }
+        onBack={() => setShowView(false)}
         onEdit={() => {
           setShowView(false);
-          selectStudent(
-            viewResult.student
-          );
+
+          if (viewResult.student) {
+            selectStudent(viewResult.student);
+          }
         }}
       />
     );
   }
 
-  // =====================================================
-  // MAIN PAGE
-  // =====================================================
+  /* =========================================================
+     REPORT VIEW
+  ========================================================= */
+
+  if (showReport) {
+    return (
+      <ResultReport
+        students={students}
+        results={results}
+        subjects={subjects}
+        selectedExam={selectedExam}
+        reportType={reportType}
+        reportClass={reportClass}
+        reportSection={reportSection}
+        reportLimit={reportLimit}
+        setReportType={setReportType}
+        setReportClass={setReportClass}
+        setReportSection={setReportSection}
+        setReportLimit={setReportLimit}
+        classList={classList}
+        sectionList={sectionList}
+        onBack={() => setShowReport(false)}
+      />
+    );
+  }
 
   return (
-    <div style={pageStyle}>
-      <div style={containerStyle}>
-        <div style={headerStyle}>
-          <div>
-            <h1 style={titleStyle}>
-              Student Results
-            </h1>
+    <div className="results-page">
+      <div className="results-container">
 
-            <p style={subtitleStyle}>
-              Manage student examination
-              results
-            </p>
+        {/* HEADER */}
+        <div className="results-header">
+          <div className="results-title-area">
+            <div className="results-header-icon">
+              📊
+            </div>
+
+            <div>
+              <h1>Student Results</h1>
+              <p>
+                Manage examinations and student results
+              </p>
+            </div>
           </div>
+
+          <button
+            className="add-exam-btn"
+            onClick={openAddExam}
+          >
+            ➕ Add Exam
+          </button>
         </div>
 
         {message && (
-          <div style={successStyle}>
+          <div className="results-success">
             ✅ {message}
           </div>
         )}
 
         {error && (
-          <div style={errorStyle}>
+          <div className="results-error">
             ❌ {error}
           </div>
         )}
 
-        {/* SEARCH */}
-        <div style={searchBoxStyle}>
-          <div style={searchLabelStyle}>
-            🔍 Search Student
+        {/* EXAMS */}
+        <div className="exam-management-card">
+          <div className="section-heading-row">
+            <div>
+              <h2>📝 Examinations</h2>
+              <p>
+                Select an examination to enter marks.
+              </p>
+            </div>
+
+            <button
+              className="small-add-btn"
+              onClick={openAddExam}
+            >
+              + Add Exam
+            </button>
           </div>
 
-          <input
-            type="text"
-            placeholder="Search by student name, roll number or admission number..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            style={searchInputStyle}
-          />
+          <div className="exam-list">
+            {exams.map((exam) => (
+              <div
+                className={`exam-card ${
+                  selectedExam === exam.name
+                    ? "active"
+                    : ""
+                }`}
+                key={exam.id}
+              >
+                <button
+                  className="exam-select-area"
+                  onClick={() => loadExam(exam.name)}
+                >
+                  <span className="exam-icon">
+                    📝
+                  </span>
+
+                  <span>
+                    <strong>{exam.name}</strong>
+
+                    <small>
+                      Internal {exam.internalMax} +
+                      External {exam.externalMax} =
+                      {Number(exam.internalMax) +
+                        Number(exam.externalMax)}{" "}
+                      Marks
+                    </small>
+                  </span>
+                </button>
+
+                <div className="exam-actions">
+                  <button
+                    onClick={() =>
+                      openEditExam(exam)
+                    }
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      deleteExam(exam)
+                    }
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* STUDENT LIST */}
-        <div style={cardStyle}>
-          <h2 style={sectionTitleStyle}>
-            Students
-          </h2>
+        {/* REPORT SHORTCUTS */}
+        <div className="result-report-shortcuts">
+          <div>
+            <h2>📋 Result Reports</h2>
+            <p>
+              Class result, top students aur bottom
+              students ki reports.
+            </p>
+          </div>
 
-          {loading ? (
-            <p>Loading students...</p>
-          ) : filteredStudents.length ===
-            0 ? (
-            <div style={emptyStyle}>
-              No students found.
-            </div>
-          ) : (
-            <div
-              style={{
-                overflowX: "auto",
-              }}
+          <div className="report-shortcut-buttons">
+            <button onClick={() => openReport("class")}>
+              📑 Class Result
+            </button>
+
+            <button onClick={() => openReport("top")}>
+              🏆 Top 10
+            </button>
+
+            <button
+              onClick={() => openReport("bottom")}
             >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse:
-                    "collapse",
+              📉 Bottom 10
+            </button>
+          </div>
+        </div>
+
+        {/* FILTER */}
+        <div className="filters-card">
+          <div className="filter-title">
+            🔍 Search & Filter Students
+          </div>
+
+          <div className="filters-grid">
+            <div className="filter-field search-field">
+              <label>Search Student</label>
+
+              <input
+                value={search}
+                placeholder="Name, roll number or admission number..."
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
+            </div>
+
+            <div className="filter-field">
+              <label>Class</label>
+
+              <select
+                value={classFilter}
+                onChange={(e) => {
+                  setClassFilter(e.target.value);
+                  setSectionFilter("All");
                 }}
               >
+                {classList.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-field">
+              <label>Section</label>
+
+              <select
+                value={sectionFilter}
+                onChange={(e) =>
+                  setSectionFilter(e.target.value)
+                }
+              >
+                {studentSectionList.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-result-count">
+              <strong>
+                {filteredStudents.length}
+              </strong>
+              <span>Students Found</span>
+            </div>
+          </div>
+        </div>
+
+        {/* STUDENTS */}
+        <div className="students-card">
+          <div className="section-heading-row">
+            <div>
+              <h2>👨‍🎓 Students</h2>
+              <p>
+                Enter or view examination results.
+              </p>
+            </div>
+
+            <div className="student-report-buttons">
+              <button
+                onClick={() => openReport("class")}
+              >
+                🖨️ Class Result
+              </button>
+
+              <button
+                onClick={() => openReport("top")}
+              >
+                🏆 Top 10
+              </button>
+
+              <button
+                onClick={() => openReport("bottom")}
+              >
+                📉 Bottom 10
+              </button>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="loading-box">
+              Loading students...
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="empty-box">
+              <div>🔎</div>
+              <strong>No students found</strong>
+              <span>
+                Search or filter change karo.
+              </span>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="results-table">
                 <thead>
-                  <tr style={tableHeaderStyle}>
-                    <th style={thStyle}>
-                      S.No.
-                    </th>
-
-                    <th style={thStyle}>
-                      Student
-                    </th>
-
-                    <th style={thStyle}>
-                      Class
-                    </th>
-
-                    <th style={thStyle}>
-                      Roll No.
-                    </th>
-
-                    <th style={thStyle}>
-                      Result
-                    </th>
-
-                    <th style={thStyle}>
-                      Action
-                    </th>
+                  <tr>
+                    <th>S.No.</th>
+                    <th>Student</th>
+                    <th>Class</th>
+                    <th>Roll No.</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {filteredStudents.map(
                     (student, index) => {
+                      const id =
+                        getStudentId(student);
+
                       const studentResult =
-                        getStudentResult(
-                          student.id
-                        );
+                        getStudentResult(id);
 
                       return (
-                        <tr
-                          key={
-                            student.id ||
-                            index
-                          }
-                        >
-                          <td style={tdStyle}>
-                            {index + 1}
-                          </td>
+                        <tr key={id || index}>
+                          <td>{index + 1}</td>
 
-                          <td style={tdStyle}>
-                            <strong>
-                              {
-                                student.name
-                              }
-                            </strong>
+                          <td>
+                            <div className="student-name-cell">
+                              <div className="student-avatar">
+                                {(
+                                  student.name ||
+                                  "S"
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </div>
 
-                            <div
-                              style={{
-                                fontSize:
-                                  "12px",
-                                color:
-                                  "#64748b",
-                                marginTop:
-                                  "3px",
-                              }}
-                            >
-                              {
-                                student.father
-                              }
+                              <div>
+                                <strong>
+                                  {student.name ||
+                                    "Unknown"}
+                                </strong>
+
+                                <small>
+                                  {getFatherName(
+                                    student
+                                  )}
+                                </small>
+                              </div>
                             </div>
                           </td>
 
-                          <td style={tdStyle}>
-                            {student.class}
-                            -
-                            {
-                              student.section
-                            }
+                          <td>
+                            <span className="class-badge">
+                              {getStudentClass(
+                                student
+                              ) || "-"}
+                              {getStudentSection(
+                                student
+                              )
+                                ? `-${getStudentSection(
+                                    student
+                                  )}`
+                                : ""}
+                            </span>
                           </td>
 
-                          <td style={tdStyle}>
-                            {student.rollNo ||
-                              "-"}
+                          <td>
+                            {getStudentRoll(student)}
                           </td>
 
-                          <td style={tdStyle}>
+                          <td>
                             {studentResult ? (
-                              <span
-                                style={
-                                  badgeGreen
-                                }
-                              >
-                                Saved
+                              <span className="status saved">
+                                ✓ Saved
                               </span>
                             ) : (
-                              <span
-                                style={
-                                  badgeYellow
-                                }
-                              >
+                              <span className="status pending">
                                 Not Added
                               </span>
                             )}
                           </td>
 
-                          <td style={tdStyle}>
-                            <button
-                              onClick={() =>
-                                selectStudent(
-                                  student
-                                )
-                              }
-                              style={
-                                primaryButton
-                              }
-                            >
-                              ✏️ Enter Result
-                            </button>
-
-                            {studentResult && (
+                          <td>
+                            <div className="action-buttons">
                               <button
+                                className="enter-result-btn"
                                 onClick={() =>
-                                  handleViewResult(
+                                  selectStudent(
                                     student
                                   )
                                 }
-                                style={
-                                  viewButton
-                                }
                               >
-                                👁️ View Result
+                                ✏️ Enter
                               </button>
-                            )}
+
+                              {studentResult && (
+                                <button
+                                  className="view-result-btn"
+                                  onClick={() =>
+                                    handleViewResult(
+                                      student
+                                    )
+                                  }
+                                >
+                                  👁 View
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -744,1017 +1304,1269 @@ const Results = () => {
 
         {/* RESULT FORM */}
         {selectedStudent && (
-          <div style={formCardStyle}>
-            <div style={studentHeaderStyle}>
-              <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    color:
-                      "#0f172a",
-                  }}
-                >
-                  Enter Result
-                </h2>
+          <ResultEntry
+            student={selectedStudent}
+            exams={exams}
+            selectedExam={selectedExam}
+            currentExam={currentExam}
+            marks={marks}
+            subjectsLoading={subjectsLoading}
+            saving={saving}
+            summary={currentSummary}
+            onExamChange={loadExam}
+            onMarksChange={handleMarksChange}
+            onSave={saveResult}
+            onView={() =>
+              handleViewResult(selectedStudent)
+            }
+            onClose={() => {
+              setSelectedStudent(null);
+              setMarks({});
+            }}
+            onEditExam={openEditExam}
+            hasSavedResult={
+              !!getStudentResult(
+                getStudentId(selectedStudent)
+              )
+            }
+          />
+        )}
+      </div>
 
-                <p
-                  style={{
-                    margin:
-                      "6px 0 0",
-                    color:
-                      "#64748b",
-                  }}
-                >
-                  {
-                    selectedStudent.name
-                  }
-                </p>
-              </div>
+      {/* EXAM MODAL */}
+      {showExamModal && (
+        <ExamModal
+          editingExam={editingExam}
+          examForm={examForm}
+          setExamForm={setExamForm}
+          onClose={() => setShowExamModal(false)}
+          onSave={saveExam}
+        />
+      )}
+    </div>
+  );
+};
 
-              <button
-                onClick={() => {
-                  setSelectedStudent(
-                    null
-                  );
-                  setMarks({});
-                }}
-                style={cancelButton}
-              >
-                ✕ Close
-              </button>
-            </div>
+/* =========================================================
+   RESULT ENTRY
+========================================================= */
 
-            {/* STUDENT DETAILS */}
-            <div
-              style={
-                studentDetailsGrid
+const ResultEntry = ({
+  student,
+  exams,
+  selectedExam,
+  currentExam,
+  marks,
+  subjectsLoading,
+  saving,
+  summary,
+  onExamChange,
+  onMarksChange,
+  onSave,
+  onView,
+  onClose,
+  onEditExam,
+  hasSavedResult,
+}) => (
+  <div className="result-form-card">
+    <div className="form-header">
+      <div>
+        <span className="form-label-top">
+          RESULT ENTRY
+        </span>
+
+        <h2>{student.name}</h2>
+
+        <p>
+          {getStudentClass(student)}
+          {getStudentSection(student)
+            ? `-${getStudentSection(student)}`
+            : ""}{" "}
+          • Roll No. {getStudentRoll(student)}
+        </p>
+      </div>
+
+      <button
+        className="close-btn"
+        onClick={onClose}
+      >
+        ✕ Close
+      </button>
+    </div>
+
+    <div className="student-info-grid">
+      <InfoBox
+        label="Father Name"
+        value={getFatherName(student)}
+      />
+
+      <InfoBox
+        label="Class"
+        value={`${getStudentClass(student) || "-"}${
+          getStudentSection(student)
+            ? `-${getStudentSection(student)}`
+            : ""
+        }`}
+      />
+
+      <InfoBox
+        label="Roll Number"
+        value={getStudentRoll(student)}
+      />
+
+      <InfoBox
+        label="Admission No."
+        value={student.admissionNo || "-"}
+      />
+    </div>
+
+    <div className="selected-exam-bar">
+      <div>
+        <label>Selected Examination</label>
+
+        <select
+          value={selectedExam}
+          onChange={(e) =>
+            onExamChange(e.target.value)
+          }
+        >
+          {exams.map((exam) => (
+            <option
+              key={exam.id}
+              value={exam.name}
+            >
+              {exam.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="marks-structure">
+        <span>Internal</span>
+        <strong>{currentExam.internalMax}</strong>
+
+        <span>External</span>
+        <strong>{currentExam.externalMax}</strong>
+
+        <span>Total</span>
+        <strong>
+          {Number(currentExam.internalMax) +
+            Number(currentExam.externalMax)}
+        </strong>
+      </div>
+
+      <button
+        className="edit-exam-inline"
+        onClick={() => onEditExam(currentExam)}
+      >
+        ⚙ Edit Exam
+      </button>
+    </div>
+
+    <div className="subjects-heading">
+      <div>
+        <h3>📚 Subjects</h3>
+        <p>Student ke class ke subjects.</p>
+      </div>
+
+      <span>
+        {Object.keys(marks).length} Subjects
+      </span>
+    </div>
+
+    {subjectsLoading ? (
+      <div className="subjects-loading">
+        Loading subjects...
+      </div>
+    ) : Object.keys(marks).length === 0 ? (
+      <div className="subjects-empty">
+        <div>📚</div>
+        <strong>Subjects nahi mile</strong>
+        <p>
+          Is class ke subjects available nahi hain.
+        </p>
+      </div>
+    ) : (
+      <div className="marks-table-wrapper">
+        <table className="marks-table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Teacher</th>
+
+              <th>
+                Internal
+                <small>
+                  / {currentExam.internalMax}
+                </small>
+              </th>
+
+              <th>
+                External
+                <small>
+                  / {currentExam.externalMax}
+                </small>
+              </th>
+
+              <th>
+                Total
+                <small>
+                  /{" "}
+                  {Number(currentExam.internalMax) +
+                    Number(currentExam.externalMax)}
+                </small>
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {Object.entries(marks).map(
+              ([subject, value]) => {
+                const internal =
+                  Number(value.internal) || 0;
+
+                const external =
+                  Number(value.external) || 0;
+
+                return (
+                  <tr key={subject}>
+                    <td>
+                      <div className="subject-name">
+                        📘 <strong>{subject}</strong>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className="teacher-name">
+                        {value.teacher ||
+                          "Teacher not assigned"}
+                      </span>
+                    </td>
+
+                    <td>
+                      <input
+                        className="mark-input"
+                        type="number"
+                        min="0"
+                        max={currentExam.internalMax}
+                        value={value.internal}
+                        onChange={(e) =>
+                          onMarksChange(
+                            subject,
+                            "internal",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        className="mark-input"
+                        type="number"
+                        min="0"
+                        max={currentExam.externalMax}
+                        value={value.external}
+                        onChange={(e) =>
+                          onMarksChange(
+                            subject,
+                            "external",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <span className="subject-total">
+                        {internal + external}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              }
+            )}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <div className="result-summary">
+      <SummaryBox
+        icon="📊"
+        title="Total Marks"
+        value={`${summary.total} / ${summary.max}`}
+      />
+
+      <SummaryBox
+        icon="📈"
+        title="Percentage"
+        value={`${summary.percentage.toFixed(2)}%`}
+      />
+
+      <SummaryBox
+        icon="🏆"
+        title="Grade"
+        value={summary.grade}
+      />
+    </div>
+
+    <div className="result-actions">
+      <button
+        className="save-result-btn"
+        onClick={onSave}
+        disabled={saving}
+      >
+        {saving
+          ? "⏳ Saving..."
+          : `💾 Save ${selectedExam}`}
+      </button>
+
+      {hasSavedResult && (
+        <button
+          className="view-large-btn"
+          onClick={onView}
+        >
+          👁 View Result
+        </button>
+      )}
+    </div>
+  </div>
+);
+
+/* =========================================================
+   EXAM MODAL
+========================================================= */
+
+const ExamModal = ({
+  editingExam,
+  examForm,
+  setExamForm,
+  onClose,
+  onSave,
+}) => (
+  <div className="modal-overlay">
+    <div className="exam-modal">
+      <div className="modal-header">
+        <div>
+          <span>EXAMINATION</span>
+          <h2>
+            {editingExam
+              ? "Edit Examination"
+              : "Add New Examination"}
+          </h2>
+        </div>
+
+        <button onClick={onClose}>✕</button>
+      </div>
+
+      <div className="exam-form">
+        <div className="exam-form-field full">
+          <label>Exam Name</label>
+
+          <input
+            type="text"
+            placeholder="Example: Half Yearly Examination"
+            value={examForm.name}
+            onChange={(e) =>
+              setExamForm({
+                ...examForm,
+                name: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="exam-form-field">
+          <label>Internal Maximum Marks</label>
+
+          <input
+            type="number"
+            min="0"
+            value={examForm.internalMax}
+            onChange={(e) =>
+              setExamForm({
+                ...examForm,
+                internalMax: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="exam-form-field">
+          <label>External Maximum Marks</label>
+
+          <input
+            type="number"
+            min="0"
+            value={examForm.externalMax}
+            onChange={(e) =>
+              setExamForm({
+                ...examForm,
+                externalMax: e.target.value,
+              })
+            }
+          />
+        </div>
+
+        <div className="exam-total-preview">
+          <span>Total Maximum Marks</span>
+
+          <strong>
+            {Number(examForm.internalMax || 0) +
+              Number(examForm.externalMax || 0)}
+          </strong>
+        </div>
+      </div>
+
+      <div className="modal-actions">
+        <button
+          className="modal-cancel"
+          onClick={onClose}
+        >
+          Cancel
+        </button>
+
+        <button
+          className="modal-save"
+          onClick={onSave}
+        >
+          💾{" "}
+          {editingExam
+            ? "Update Exam"
+            : "Add Exam"}
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* =========================================================
+   RESULT REPORT
+========================================================= */
+
+const ResultReport = ({
+  students,
+  results,
+  subjects,
+  selectedExam,
+  reportType,
+  reportClass,
+  reportSection,
+  reportLimit,
+  setReportType,
+  setReportClass,
+  setReportSection,
+  setReportLimit,
+  classList,
+  sectionList,
+  onBack,
+}) => {
+  const currentExam = {
+    internalMax: 30,
+    externalMax: 70,
+  };
+
+  const getResult = (student) =>
+    results.find(
+      (result) =>
+        String(result.studentId) ===
+        String(getStudentId(student))
+    );
+
+  const getExamData = (student) =>
+    getResult(student)?.exams?.[selectedExam] ||
+    null;
+
+  const getTotal = (student) =>
+    Number(getExamData(student)?.totalMarks || 0);
+
+  const getMax = (student) => {
+    const examData = getExamData(student);
+
+    if (examData) {
+      return Number(examData.maxMarks || 0);
+    }
+
+    return (
+      subjects.length *
+      (currentExam.internalMax +
+        currentExam.externalMax)
+    );
+  };
+
+  const getPercentage = (student) => {
+    const examData = getExamData(student);
+
+    if (examData) {
+      return Number(examData.percentage || 0);
+    }
+
+    const max = getMax(student);
+    const total = getTotal(student);
+
+    return max ? (total / max) * 100 : 0;
+  };
+
+  const getSubjectMark = (
+    student,
+    subjectName
+  ) => {
+    const subject =
+      getExamData(student)?.subjects?.find(
+        (item) =>
+          String(item.name).toLowerCase() ===
+          String(subjectName).toLowerCase()
+      );
+
+    if (!subject) return "-";
+
+    return (
+      subject.total ??
+      Number(subject.internal || 0) +
+        Number(subject.external || 0)
+    );
+  };
+
+  const filteredStudents = useMemo(
+    () =>
+      students.filter((student) => {
+        const classMatch =
+          reportClass === "All" ||
+          String(getStudentClass(student)) ===
+            String(reportClass);
+
+        const sectionMatch =
+          reportSection === "All" ||
+          String(getStudentSection(student)) ===
+            String(reportSection);
+
+        return classMatch && sectionMatch;
+      }),
+    [students, reportClass, reportSection]
+  );
+
+  const reportStudents = useMemo(() => {
+    const list = [...filteredStudents];
+
+    if (reportType === "top") {
+      return list
+        .sort(
+          (a, b) =>
+            getPercentage(b) -
+            getPercentage(a)
+        )
+        .slice(0, Number(reportLimit));
+    }
+
+    if (reportType === "bottom") {
+      return list
+        .sort(
+          (a, b) =>
+            getPercentage(a) -
+            getPercentage(b)
+        )
+        .slice(0, Number(reportLimit));
+    }
+
+    return list.sort((a, b) =>
+      naturalSort(a.name || "", b.name || "")
+    );
+  }, [
+    filteredStudents,
+    reportType,
+    reportLimit,
+    results,
+    selectedExam,
+  ]);
+
+  const reportSubjects = useMemo(() => {
+    const names = [];
+
+    reportStudents.forEach((student) => {
+      getExamData(student)?.subjects?.forEach(
+        (subject) => {
+          if (
+            subject.name &&
+            !names.some(
+              (name) =>
+                name.toLowerCase() ===
+                subject.name.toLowerCase()
+            )
+          ) {
+            names.push(subject.name);
+          }
+        }
+      );
+    });
+
+    if (!names.length) {
+      subjects.forEach((subject) => {
+        const name = getSubjectName(subject);
+
+        if (
+          name &&
+          !names.some(
+            (item) =>
+              item.toLowerCase() ===
+              name.toLowerCase()
+          )
+        ) {
+          names.push(name);
+        }
+      });
+    }
+
+    return names;
+  }, [reportStudents, subjects]);
+
+  const title =
+    reportType === "top"
+      ? `TOP ${reportLimit} STUDENTS`
+      : reportType === "bottom"
+      ? `BOTTOM ${reportLimit} STUDENTS`
+      : "CLASS WISE RESULT";
+
+  return (
+    <div className="result-report-page">
+      <div className="report-controls no-print">
+        <button
+          className="back-report-btn"
+          onClick={onBack}
+        >
+          ← Back
+        </button>
+
+        <div className="report-control-title">
+          <h1>📊 Result Reports</h1>
+          <p>
+            Student result reports and rankings
+          </p>
+        </div>
+
+        <div className="report-control-actions">
+          <button
+            className={
+              reportType === "class"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setReportType("class")
+            }
+          >
+            📑 Class Result
+          </button>
+
+          <button
+            className={
+              reportType === "top"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setReportType("top")
+            }
+          >
+            🏆 Topper
+          </button>
+
+          <button
+            className={
+              reportType === "bottom"
+                ? "active"
+                : ""
+            }
+            onClick={() =>
+              setReportType("bottom")
+            }
+          >
+            📉 Bottomer
+          </button>
+        </div>
+
+        <div className="report-filter-box">
+          <div>
+            <label>Examination</label>
+            <input
+              value={selectedExam}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label>Class</label>
+
+            <select
+              value={reportClass}
+              onChange={(e) =>
+                setReportClass(e.target.value)
               }
             >
-              <Detail
-                label="Father Name"
-                value={
-                  selectedStudent.father ||
-                  "-"
-                }
-              />
+              {classList.map((item) => (
+                <option key={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
 
-              <Detail
-                label="Class"
-                value={
-                  `${selectedStudent.class}-${selectedStudent.section || ""}`
-                }
-              />
+          <div>
+            <label>Section</label>
 
-              <Detail
-                label="Roll Number"
-                value={
-                  selectedStudent.rollNo ||
-                  "-"
-                }
-              />
-
-              <Detail
-                label="Admission No."
-                value={
-                  selectedStudent.admissionNo ||
-                  "-"
-                }
-              />
-            </div>
-
-            {/* EXAM SELECT */}
-            <div
-              style={{
-                marginTop:
-                  "25px",
-              }}
+            <select
+              value={reportSection}
+              onChange={(e) =>
+                setReportSection(e.target.value)
+              }
             >
-              <label
-                style={labelStyle}
-              >
-                Select Examination
-              </label>
+              {sectionList.map((item) => (
+                <option key={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {reportType !== "class" && (
+            <div>
+              <label>Students</label>
 
               <select
-                value={selectedExam}
+                value={reportLimit}
                 onChange={(e) =>
-                  loadExam(
-                    e.target.value
-                  )
-                }
-                style={
-                  selectStyle
+                  setReportLimit(e.target.value)
                 }
               >
-                {EXAMS.map(
-                  (exam) => (
-                    <option
-                      key={exam}
-                      value={exam}
-                    >
-                      {exam}
-                    </option>
-                  )
-                )}
+                <option value="5">
+                  Top/Bottom 5
+                </option>
+                <option value="10">
+                  Top/Bottom 10
+                </option>
+                <option value="15">
+                  Top/Bottom 15
+                </option>
+                <option value="20">
+                  Top/Bottom 20
+                </option>
               </select>
             </div>
+          )}
 
-            {/* MARKS TABLE */}
-            <div
-              style={{
-                overflowX:
-                  "auto",
-                marginTop:
-                  "25px",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse:
-                    "collapse",
-                }}
-              >
-                <thead>
-                  <tr
-                    style={
-                      tableHeaderStyle
-                    }
-                  >
-                    <th
-                      style={
-                        thStyle
-                      }
-                    >
-                      Subject
-                    </th>
+          <button
+            className="report-print-btn"
+            onClick={() => window.print()}
+          >
+            🖨️ Print
+          </button>
+        </div>
+      </div>
 
-                    <th
-                      style={{
-                        ...thStyle,
-                        textAlign:
-                          "center",
-                      }}
-                    >
-                      Internal
-                      <br />
-                      <small>
-                        / 30
-                      </small>
-                    </th>
+      <div className="report-print-paper">
+        <div className="school-report-header">
+          <h1>
+            MAHARANA PRATAP
+            <br />
+            SCIENCE ACADEMY
+          </h1>
 
-                    <th
-                      style={{
-                        ...thStyle,
-                        textAlign:
-                          "center",
-                      }}
-                    >
-                      External
-                      <br />
-                      <small>
-                        / 70
-                      </small>
-                    </th>
+          <h3>INTER COLLEGE</h3>
 
-                    <th
-                      style={{
-                        ...thStyle,
-                        textAlign:
-                          "center",
-                      }}
-                    >
-                      Total
-                      <br />
-                      <small>
-                        / 100
-                      </small>
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {Object.keys(
-                    marks
-                  ).length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        style={{
-                          padding:
-                            "30px",
-                          textAlign:
-                            "center",
-                        }}
-                      >
-                        Loading subjects...
-                      </td>
-                    </tr>
-                  ) : (
-                    Object.entries(
-                      marks
-                    ).map(
-                      ([
-                        subject,
-                        value,
-                      ]) => {
-                        const internal =
-                          Number(
-                            value.internal
-                          ) || 0;
-
-                        const external =
-                          Number(
-                            value.external
-                          ) || 0;
-
-                        return (
-                          <tr
-                            key={
-                              subject
-                            }
-                          >
-                            <td
-                              style={
-                                tdStyle
-                              }
-                            >
-                              <strong>
-                                {
-                                  subject
-                                }
-                              </strong>
-                            </td>
-
-                            <td
-                              style={{
-                                ...tdStyle,
-                                textAlign:
-                                  "center",
-                              }}
-                            >
-                              <input
-                                type="number"
-                                min="0"
-                                max="30"
-                                value={
-                                  value.internal
-                                }
-                                onChange={(
-                                  e
-                                ) =>
-                                  handleMarksChange(
-                                    subject,
-                                    "internal",
-                                    e
-                                      .target
-                                      .value
-                                  )
-                                }
-                                style={
-                                  markInputStyle
-                                }
-                              />
-                            </td>
-
-                            <td
-                              style={{
-                                ...tdStyle,
-                                textAlign:
-                                  "center",
-                              }}
-                            >
-                              <input
-                                type="number"
-                                min="0"
-                                max="70"
-                                value={
-                                  value.external
-                                }
-                                onChange={(
-                                  e
-                                ) =>
-                                  handleMarksChange(
-                                    subject,
-                                    "external",
-                                    e
-                                      .target
-                                      .value
-                                  )
-                                }
-                                style={
-                                  markInputStyle
-                                }
-                              />
-                            </td>
-
-                            <td
-                              style={{
-                                ...tdStyle,
-                                textAlign:
-                                  "center",
-                                fontWeight:
-                                  "700",
-                                color:
-                                  "#2563eb",
-                              }}
-                            >
-                              {internal +
-                                external}
-                            </td>
-                          </tr>
-                        );
-                      }
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* SUMMARY */}
-            <div
-              style={
-                summaryGrid
-              }
-            >
-              <SummaryBox
-                title="Total Marks"
-                value={`${currentSummary.total} / ${currentSummary.max}`}
-              />
-
-              <SummaryBox
-                title="Percentage"
-                value={`${currentSummary.percentage.toFixed(
-                  2
-                )}%`}
-              />
-
-              <SummaryBox
-                title="Grade"
-                value={
-                  currentSummary.grade
-                }
-              />
-            </div>
-
-            {/* SAVE */}
-            <div
-              style={{
-                marginTop:
-                  "25px",
-                display:
-                  "flex",
-                gap: "10px",
-                flexWrap:
-                  "wrap",
-              }}
-            >
-              <button
-                onClick={
-                  saveResult
-                }
-                disabled={saving}
-                style={
-                  saveButton
-                }
-              >
-                {saving
-                  ? "Saving..."
-                  : `💾 Save ${selectedExam}`}
-              </button>
-
-              {getStudentResult(
-                selectedStudent.id
-              ) && (
-                <button
-                  onClick={() =>
-                    handleViewResult(
-                      selectedStudent
-                    )
-                  }
-                  style={
-                    viewButtonLarge
-                  }
-                >
-                  👁️ View Result
-                </button>
-              )}
-            </div>
+          <div className="report-main-title">
+            {title}
           </div>
+
+          <div className="report-session">
+            Academic Session {SESSION}
+          </div>
+
+          <div className="report-meta-row">
+            <span>
+              <strong>Examination:</strong>{" "}
+              {selectedExam}
+            </span>
+
+            <span>
+              <strong>Class:</strong>{" "}
+              {reportClass === "All"
+                ? "All Classes"
+                : reportClass}
+            </span>
+
+            <span>
+              <strong>Section:</strong>{" "}
+              {reportSection === "All"
+                ? "All Sections"
+                : reportSection}
+            </span>
+          </div>
+        </div>
+
+        {reportType === "class" ? (
+          <ClassResultTable
+            students={reportStudents}
+            subjects={reportSubjects}
+            getSubjectMark={getSubjectMark}
+            getTotal={getTotal}
+            getMax={getMax}
+            getPercentage={getPercentage}
+          />
+        ) : (
+          <RankResultTable
+            students={reportStudents}
+            getTotal={getTotal}
+            getMax={getMax}
+            getPercentage={getPercentage}
+          />
         )}
+
+        <div className="report-footer">
+          <div>Class Teacher Signature</div>
+          <div>Principal</div>
+          <div>School Seal</div>
+        </div>
       </div>
     </div>
   );
 };
 
-// =====================================================
-// RESULT VIEW COMPONENT
-// =====================================================
+/* =========================================================
+   CLASS RESULT TABLE
+========================================================= */
+
+const ClassResultTable = ({
+  students,
+  subjects,
+  getSubjectMark,
+  getTotal,
+  getMax,
+  getPercentage,
+}) => (
+  <div className="complete-class-result-wrapper">
+    <table className="complete-class-result">
+      <thead>
+        <tr>
+          <th>S.No.</th>
+          <th>Student Name</th>
+          <th>Father Name</th>
+          <th>Class</th>
+          <th>Roll No.</th>
+
+          {subjects.map((subject) => (
+            <th key={subject}>{subject}</th>
+          ))}
+
+          <th>Total</th>
+          <th>%</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {students.length === 0 ? (
+          <tr>
+            <td
+              colSpan={subjects.length + 8}
+              className="no-report-data"
+            >
+              No result available.
+            </td>
+          </tr>
+        ) : (
+          students.map((student, index) => {
+            const percentage =
+              getPercentage(student);
+
+            return (
+              <tr
+                key={
+                  getStudentId(student) || index
+                }
+              >
+                <td>{index + 1}</td>
+
+                <td className="student-name-print">
+                  {student.name || "-"}
+                </td>
+
+                <td>
+                  {getFatherName(student)}
+                </td>
+
+                <td>
+                  {getStudentClass(student)}
+                  {getStudentSection(student)
+                    ? `-${getStudentSection(
+                        student
+                      )}`
+                    : ""}
+                </td>
+
+                <td>{getStudentRoll(student)}</td>
+
+                {subjects.map((subject) => (
+                  <td key={subject}>
+                    {getSubjectMark(
+                      student,
+                      subject
+                    )}
+                  </td>
+                ))}
+
+                <td>
+                  <strong>
+                    {getTotal(student)}/
+                    {getMax(student)}
+                  </strong>
+                </td>
+
+                <td>
+                  {percentage.toFixed(2)}%
+                </td>
+
+                <td>
+                  {getGrade(percentage)}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
+/* =========================================================
+   RANK TABLE
+========================================================= */
+
+const RankResultTable = ({
+  students,
+  getTotal,
+  getMax,
+  getPercentage,
+}) => (
+  <div className="rank-result-wrapper">
+    <table className="rank-result-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Student Name</th>
+          <th>Father Name</th>
+          <th>Class</th>
+          <th>Section</th>
+          <th>Roll No.</th>
+          <th>Total</th>
+          <th>Percentage</th>
+          <th>Grade</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {students.length === 0 ? (
+          <tr>
+            <td colSpan="10" className="no-report-data">
+              No result available.
+            </td>
+          </tr>
+        ) : (
+          students.map((student, index) => {
+            const percentage =
+              getPercentage(student);
+
+            return (
+              <tr
+                key={
+                  getStudentId(student) || index
+                }
+              >
+                <td className="rank-number">
+                  {index + 1}
+                </td>
+
+                <td className="rank-student-name">
+                  {student.name || "-"}
+                </td>
+
+                <td>
+                  {getFatherName(student)}
+                </td>
+
+                <td>
+                  {getStudentClass(student)}
+                </td>
+
+                <td>
+                  {getStudentSection(student) ||
+                    "-"}
+                </td>
+
+                <td>
+                  {getStudentRoll(student)}
+                </td>
+
+                <td>
+                  <strong>
+                    {getTotal(student)}/
+                    {getMax(student)}
+                  </strong>
+                </td>
+
+                <td>
+                  <strong>
+                    {percentage.toFixed(2)}%
+                  </strong>
+                </td>
+
+                <td>
+                  {getGrade(percentage)}
+                </td>
+
+                <td>
+                  {percentage >= 33
+                    ? "PASS"
+                    : "FAIL"}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
+/* =========================================================
+   RESULT VIEW
+========================================================= */
 
 const ResultView = ({
   result,
   onBack,
   onEdit,
 }) => {
-  const student =
-    result.student;
+  const student = result.student || {};
+  const resultExams = result.exams || {};
+  const examList = Object.keys(resultExams);
 
-  const exams =
-    result.exams || {};
+  const overall = examList.reduce(
+    (acc, exam) => {
+      acc.total += Number(
+        resultExams[exam]?.totalMarks || 0
+      );
 
-  const examList =
-    EXAMS.filter(
-      (exam) => exams[exam]
-    );
+      acc.max += Number(
+        resultExams[exam]?.maxMarks || 0
+      );
 
-  let overallTotal = 0;
-  let overallMax = 0;
-
-  examList.forEach(
-    (exam) => {
-      overallTotal +=
-        Number(
-          exams[exam].totalMarks ||
-            0
-        );
-
-      overallMax +=
-        Number(
-          exams[exam].maxMarks ||
-            0
-        );
-    }
+      return acc;
+    },
+    { total: 0, max: 0 }
   );
 
-  const overallPercentage =
-    overallMax > 0
-      ? (overallTotal /
-          overallMax) *
-        100
+  const percentage =
+    overall.max > 0
+      ? (overall.total / overall.max) * 100
       : 0;
 
-  const overallGrade =
-    getGrade(
-      overallPercentage
-    );
-
-  const overallResult =
-    examList.length === 0
-      ? "NOT AVAILABLE"
-      : examList.every(
-          (exam) =>
-            exams[exam].result ===
-            "PASS"
-        )
-      ? "PASS"
-      : "FAIL";
-
   return (
-    <div
-      style={{
-        minHeight:
-          "100vh",
-        background:
-          "#eef2f7",
-        padding:
-          "30px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth:
-            "1100px",
-          margin:
-            "0 auto",
-          background:
-            "white",
-          borderRadius:
-            "14px",
-          padding:
-            "35px",
-          boxShadow:
-            "0 4px 20px rgba(0,0,0,0.08)",
-        }}
-      >
-        {/* HEADER */}
-        <div
-          style={{
-            textAlign:
-              "center",
-            borderBottom:
-              "2px solid #1e40af",
-            paddingBottom:
-              "20px",
-          }}
-        >
-          <h1
-            style={{
-              margin:
-                "0 0 5px",
-              color:
-                "#1e3a8a",
-              fontSize:
-                "28px",
-            }}
-          >
+    <div className="result-view-page">
+      <div className="result-paper">
+        <div className="report-header">
+          <h1>
             MAHARANA PRATAP
+            <br />
             SCIENCE ACADEMY
           </h1>
 
-          <h3
-            style={{
-              margin:
-                "0 0 8px",
-              color:
-                "#475569",
-            }}
-          >
-            INTER COLLEGE
-          </h3>
+          <h3>INTER COLLEGE</h3>
 
-          <div
-            style={{
-              fontWeight:
-                "700",
-              fontSize:
-                "18px",
-            }}
-          >
-            STUDENT REPORT CARD
-          </div>
+          <div>STUDENT REPORT CARD</div>
 
-          <div
-            style={{
-              marginTop:
-                "5px",
-              color:
-                "#64748b",
-            }}
-          >
+          <small>
             Academic Session{" "}
-            {result.session ||
-              "2026-27"}
-          </div>
+            {result.session || SESSION}
+          </small>
         </div>
 
-        {/* STUDENT DETAILS */}
-        <div
-          style={{
-            marginTop:
-              "25px",
-            padding:
-              "20px",
-            background:
-              "#f8fafc",
-            borderRadius:
-              "10px",
-            display:
-              "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(220px, 1fr))",
-            gap:
-              "15px",
-          }}
-        >
-          <Detail
+        <div className="report-student-info">
+          <InfoBox
             label="Student Name"
-            value={
-              student?.name ||
-              "-"
-            }
+            value={student.name || "-"}
           />
 
-          <Detail
+          <InfoBox
             label="Father Name"
-            value={
-              student?.father ||
-              "-"
-            }
+            value={getFatherName(student)}
           />
 
-          <Detail
+          <InfoBox
             label="Class"
-            value={`${student?.class || "-"}-${
-              student?.section || ""
+            value={`${getStudentClass(student) || "-"}${
+              getStudentSection(student)
+                ? `-${getStudentSection(student)}`
+                : ""
             }`}
           />
 
-          <Detail
+          <InfoBox
             label="Roll Number"
-            value={
-              student?.rollNo ||
-              "-"
-            }
+            value={getStudentRoll(student)}
           />
 
-          <Detail
+          <InfoBox
             label="Admission Number"
-            value={
-              student?.admissionNo ||
-              "-"
-            }
+            value={student.admissionNo || "-"}
           />
 
-          <Detail
+          <InfoBox
             label="Date of Birth"
-            value={
-              student?.dob ||
-              "-"
-            }
+            value={student.dob || "-"}
           />
         </div>
 
-        {/* EXAMS */}
-        {examList.length ===
-        0 ? (
-          <div
-            style={{
-              marginTop:
-                "30px",
-              padding:
-                "30px",
-              textAlign:
-                "center",
-              background:
-                "#fef3c7",
-              borderRadius:
-                "10px",
-            }}
-          >
-            No examination
-            result has been
-            saved yet.
+        {examList.length === 0 ? (
+          <div className="report-empty">
+            No examination result available.
           </div>
         ) : (
-          examList.map(
-            (exam) => {
-              const data =
-                exams[exam];
+          examList.map((exam) => {
+            const data = resultExams[exam];
 
-              return (
-                <div
-                  key={exam}
-                  style={{
-                    marginTop:
-                      "30px",
-                  }}
-                >
-                  <h2
-                    style={{
-                      marginBottom:
-                        "12px",
-                      color:
-                        "#1e3a8a",
-                    }}
-                  >
-                    {exam}
-                  </h2>
+            return (
+              <div className="report-exam" key={exam}>
+                <h2>{exam}</h2>
 
-                  <div
-                    style={{
-                      overflowX:
-                        "auto",
-                    }}
-                  >
-                    <table
-                      style={{
-                        width:
-                          "100%",
-                        borderCollapse:
-                          "collapse",
-                      }}
-                    >
-                      <thead>
-                        <tr
-                          style={
-                            tableHeaderStyle
-                          }
-                        >
-                          <th
-                            style={
-                              thStyle
-                            }
-                          >
-                            Subject
-                          </th>
+                <div className="report-table-wrapper">
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Internal</th>
+                        <th>External</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
 
-                          <th
-                            style={{
-                              ...thStyle,
-                              textAlign:
-                                "center",
-                            }}
-                          >
-                            Internal
-                            <br />
-                            /30
-                          </th>
+                    <tbody>
+                      {(data.subjects || []).map(
+                        (subject) => (
+                          <tr key={subject.name}>
+                            <td>{subject.name}</td>
+                            <td>
+                              {subject.teacher ||
+                                "-"}
+                            </td>
+                            <td>
+                              {subject.internal ?? 0}
+                            </td>
+                            <td>
+                              {subject.external ?? 0}
+                            </td>
+                            <td>
+                              {subject.total ??
+                                Number(
+                                  subject.internal ||
+                                    0
+                                ) +
+                                  Number(
+                                    subject.external ||
+                                      0
+                                  )}
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
 
-                          <th
-                            style={{
-                              ...thStyle,
-                              textAlign:
-                                "center",
-                            }}
-                          >
-                            External
-                            <br />
-                            /70
-                          </th>
+                    <tfoot>
+                      <tr>
+                        <td colSpan="4">
+                          Total
+                        </td>
 
-                          <th
-                            style={{
-                              ...thStyle,
-                              textAlign:
-                                "center",
-                            }}
-                          >
-                            Total
-                            <br />
-                            /100
-                          </th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {data.subjects?.map(
-                          (
-                            subject
-                          ) => (
-                            <tr
-                              key={
-                                subject.name
-                              }
-                            >
-                              <td
-                                style={
-                                  tdStyle
-                                }
-                              >
-                                {
-                                  subject.name
-                                }
-                              </td>
-
-                              <td
-                                style={{
-                                  ...tdStyle,
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                {
-                                  subject.internal
-                                }
-                                /30
-                              </td>
-
-                              <td
-                                style={{
-                                  ...tdStyle,
-                                  textAlign:
-                                    "center",
-                                }}
-                              >
-                                {
-                                  subject.external
-                                }
-                                /70
-                              </td>
-
-                              <td
-                                style={{
-                                  ...tdStyle,
-                                  textAlign:
-                                    "center",
-                                  fontWeight:
-                                    "700",
-                                }}
-                              >
-                                {
-                                  subject.total
-                                }
-                                /100
-                              </td>
-                            </tr>
-                          )
-                        )}
-                      </tbody>
-
-                      <tfoot>
-                        <tr
-                          style={{
-                            background:
-                              "#f8fafc",
-                          }}
-                        >
-                          <td
-                            style={{
-                              ...tdStyle,
-                              fontWeight:
-                                "700",
-                            }}
-                          >
-                            Total
-                          </td>
-
-                          <td
-                            style={{
-                              ...tdStyle,
-                              textAlign:
-                                "center",
-                            }}
-                          >
-                            -
-                          </td>
-
-                          <td
-                            style={{
-                              ...tdStyle,
-                              textAlign:
-                                "center",
-                            }}
-                          >
-                            -
-                          </td>
-
-                          <td
-                            style={{
-                              ...tdStyle,
-                              textAlign:
-                                "center",
-                              fontWeight:
-                                "800",
-                              color:
-                                "#1e40af",
-                            }}
-                          >
-                            {
-                              data.totalMarks
-                            }{" "}
-                            /{" "}
-                            {
-                              data.maxMarks
-                            }
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-
-                  <div
-                    style={{
-                      display:
-                        "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(150px, 1fr))",
-                      gap:
-                        "12px",
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <SummaryBox
-                      title="Percentage"
-                      value={`${data.percentage}%`}
-                    />
-
-                    <SummaryBox
-                      title="Grade"
-                      value={
-                        data.grade
-                      }
-                    />
-
-                    <SummaryBox
-                      title="Result"
-                      value={
-                        data.result
-                      }
-                    />
-                  </div>
+                        <td>
+                          {data.totalMarks || 0}
+                          {" / "}
+                          {data.maxMarks || 0}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
-              );
-            }
-          )
+
+                <div className="report-summary">
+                  <SummaryBox
+                    title="Percentage"
+                    value={`${Number(
+                      data.percentage || 0
+                    ).toFixed(2)}%`}
+                  />
+
+                  <SummaryBox
+                    title="Grade"
+                    value={data.grade || "-"}
+                  />
+
+                  <SummaryBox
+                    title="Result"
+                    value={data.result || "-"}
+                  />
+                </div>
+              </div>
+            );
+          })
         )}
 
-        {/* OVERALL */}
-        {examList.length >
-          0 && (
-          <div
-            style={{
-              marginTop:
-                "35px",
-              padding:
-                "25px",
-              background:
-                "#eff6ff",
-              border:
-                "2px solid #bfdbfe",
-              borderRadius:
-                "12px",
-            }}
-          >
-            <h2
-              style={{
-                marginTop:
-                  0,
-                color:
-                  "#1e3a8a",
-                textAlign:
-                  "center",
-              }}
-            >
-              Overall Result
-            </h2>
+        {examList.length > 0 && (
+          <div className="overall-report">
+            <h2>Overall Result</h2>
 
-            <div
-              style={{
-                display:
-                  "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(180px, 1fr))",
-                gap:
-                  "15px",
-                textAlign:
-                  "center",
-              }}
-            >
+            <div className="overall-summary">
               <SummaryBox
                 title="Total Marks"
-                value={`${overallTotal} / ${overallMax}`}
+                value={`${overall.total} / ${overall.max}`}
               />
 
               <SummaryBox
                 title="Overall Percentage"
-                value={`${overallPercentage.toFixed(
-                  2
-                )}%`}
+                value={`${percentage.toFixed(2)}%`}
               />
 
               <SummaryBox
                 title="Overall Grade"
-                value={
-                  overallGrade
-                }
+                value={getGrade(percentage)}
               />
 
               <SummaryBox
                 title="Final Result"
                 value={
-                  overallResult
+                  examList.every(
+                    (exam) =>
+                      resultExams[exam]?.result ===
+                      "PASS"
+                  )
+                    ? "PASS"
+                    : "FAIL"
                 }
               />
             </div>
           </div>
         )}
 
-        {/* BUTTONS */}
-        <div
-          style={{
-            display:
-              "flex",
-            justifyContent:
-              "center",
-            gap:
-              "12px",
-            marginTop:
-              "30px",
-            flexWrap:
-              "wrap",
-          }}
-        >
-          <button
-            onClick={
-              onBack
-            }
-            style={
-              cancelButton
-            }
-          >
+        <div className="report-buttons no-print">
+          <button onClick={onBack}>
             ← Back
           </button>
 
-          <button
-            onClick={
-              onEdit
-            }
-            style={
-              primaryButton
-            }
-          >
+          <button onClick={onEdit}>
             ✏️ Edit Result
           </button>
 
-          <button
-            onClick={() =>
-              window.print()
-            }
-            style={
-              saveButton
-            }
-          >
+          <button onClick={() => window.print()}>
             🖨️ Print Result
           </button>
         </div>
@@ -1763,371 +2575,32 @@ const ResultView = ({
   );
 };
 
-// =====================================================
-// SMALL COMPONENTS
-// =====================================================
+/* =========================================================
+   SMALL COMPONENTS
+========================================================= */
 
-const Detail = ({
-  label,
-  value,
-}) => {
-  return (
-    <div>
-      <div
-        style={{
-          fontSize:
-            "12px",
-          color:
-            "#64748b",
-          marginBottom:
-            "4px",
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          fontWeight:
-            "700",
-          color:
-            "#1e293b",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-};
+const InfoBox = ({ label, value }) => (
+  <div className="info-box">
+    <span>{label}</span>
+    <strong>{value}</strong>
+  </div>
+);
 
 const SummaryBox = ({
+  icon,
   title,
   value,
-}) => {
-  return (
-    <div
-      style={{
-        background:
-          "white",
-        padding:
-          "15px",
-        borderRadius:
-          "8px",
-        border:
-          "1px solid #e2e8f0",
-      }}
-    >
-      <div
-        style={{
-          fontSize:
-            "12px",
-          color:
-            "#64748b",
-          marginBottom:
-            "5px",
-        }}
-      >
-        {title}
+}) => (
+  <div className="summary-box">
+    {icon && (
+      <div className="summary-icon">
+        {icon}
       </div>
+    )}
 
-      <div
-        style={{
-          fontSize:
-            "20px",
-          fontWeight:
-            "800",
-          color:
-            "#1e293b",
-        }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-};
-
-// =====================================================
-// GRADE
-// =====================================================
-
-const getGrade = (
-  percentage
-) => {
-  if (percentage >= 90)
-    return "A+";
-
-  if (percentage >= 80)
-    return "A";
-
-  if (percentage >= 70)
-    return "B+";
-
-  if (percentage >= 60)
-    return "B";
-
-  if (percentage >= 50)
-    return "C";
-
-  if (percentage >= 40)
-    return "D";
-
-  return "F";
-};
-
-// =====================================================
-// STYLES
-// =====================================================
-
-const pageStyle = {
-  minHeight: "100vh",
-  backgroundColor:
-    "#f1f5f9",
-  padding: "30px",
-};
-
-const containerStyle = {
-  maxWidth: "1250px",
-  margin: "0 auto",
-};
-
-const headerStyle = {
-  background:
-    "linear-gradient(135deg, #1e3a8a, #2563eb)",
-  padding: "28px",
-  borderRadius: "14px",
-  color: "white",
-  marginBottom: "20px",
-};
-
-const titleStyle = {
-  margin: 0,
-  fontSize: "28px",
-};
-
-const subtitleStyle = {
-  margin:
-    "6px 0 0",
-  opacity: 0.9,
-};
-
-const cardStyle = {
-  background: "white",
-  padding: "25px",
-  borderRadius: "12px",
-  boxShadow:
-    "0 2px 10px rgba(0,0,0,0.06)",
-  marginBottom: "20px",
-};
-
-const formCardStyle = {
-  background: "white",
-  padding: "25px",
-  borderRadius: "12px",
-  boxShadow:
-    "0 2px 10px rgba(0,0,0,0.06)",
-};
-
-const searchBoxStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "12px",
-  marginBottom: "20px",
-  boxShadow:
-    "0 2px 10px rgba(0,0,0,0.06)",
-};
-
-const searchLabelStyle = {
-  fontWeight: "700",
-  marginBottom: "10px",
-  color: "#334155",
-};
-
-const searchInputStyle = {
-  width: "100%",
-  padding: "13px 15px",
-  border:
-    "1px solid #cbd5e1",
-  borderRadius: "8px",
-  fontSize: "15px",
-  boxSizing: "border-box",
-  outline: "none",
-};
-
-const sectionTitleStyle = {
-  marginTop: 0,
-  color: "#1e293b",
-};
-
-const studentHeaderStyle = {
-  display: "flex",
-  justifyContent:
-    "space-between",
-  alignItems: "center",
-  gap: "15px",
-  flexWrap: "wrap",
-};
-
-const studentDetailsGrid = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: "15px",
-  marginTop: "20px",
-  padding: "18px",
-  background: "#f8fafc",
-  borderRadius: "10px",
-};
-
-const tableHeaderStyle = {
-  backgroundColor:
-    "#1e40af",
-  color: "white",
-};
-
-const thStyle = {
-  padding: "13px",
-  textAlign: "left",
-  borderBottom:
-    "1px solid #e2e8f0",
-};
-
-const tdStyle = {
-  padding: "13px",
-  borderBottom:
-    "1px solid #e2e8f0",
-  color: "#334155",
-};
-
-const primaryButton = {
-  backgroundColor:
-    "#2563eb",
-  color: "white",
-  border: "none",
-  padding:
-    "9px 13px",
-  borderRadius: "7px",
-  cursor: "pointer",
-  marginRight: "7px",
-  marginBottom: "5px",
-};
-
-const viewButton = {
-  backgroundColor:
-    "#7c3aed",
-  color: "white",
-  border: "none",
-  padding:
-    "9px 13px",
-  borderRadius: "7px",
-  cursor: "pointer",
-  marginBottom: "5px",
-};
-
-const viewButtonLarge = {
-  ...viewButton,
-  padding:
-    "11px 18px",
-};
-
-const saveButton = {
-  backgroundColor:
-    "#16a34a",
-  color: "white",
-  border: "none",
-  padding:
-    "11px 20px",
-  borderRadius: "7px",
-  cursor: "pointer",
-  fontWeight: "600",
-};
-
-const cancelButton = {
-  backgroundColor:
-    "#64748b",
-  color: "white",
-  border: "none",
-  padding:
-    "10px 18px",
-  borderRadius: "7px",
-  cursor: "pointer",
-};
-
-const markInputStyle = {
-  width: "90px",
-  padding: "9px",
-  border:
-    "1px solid #cbd5e1",
-  borderRadius: "6px",
-  textAlign: "center",
-  fontSize: "14px",
-  boxSizing: "border-box",
-};
-
-const selectStyle = {
-  padding: "11px 14px",
-  border:
-    "1px solid #cbd5e1",
-  borderRadius: "7px",
-  fontSize: "15px",
-  minWidth: "220px",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: "7px",
-  fontWeight: "700",
-  color: "#334155",
-};
-
-const summaryGrid = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: "15px",
-  marginTop: "25px",
-  padding: "18px",
-  background: "#f8fafc",
-  borderRadius: "10px",
-};
-
-const successStyle = {
-  padding: "13px",
-  background: "#dcfce7",
-  color: "#166534",
-  borderRadius: "8px",
-  marginBottom: "15px",
-};
-
-const errorStyle = {
-  padding: "13px",
-  background: "#fee2e2",
-  color: "#991b1b",
-  borderRadius: "8px",
-  marginBottom: "15px",
-};
-
-const emptyStyle = {
-  padding: "30px",
-  textAlign: "center",
-  color: "#64748b",
-};
-
-const badgeGreen = {
-  background: "#dcfce7",
-  color: "#166534",
-  padding: "5px 10px",
-  borderRadius: "20px",
-  fontSize: "12px",
-  fontWeight: "700",
-};
-
-const badgeYellow = {
-  background: "#fef3c7",
-  color: "#92400e",
-  padding: "5px 10px",
-  borderRadius: "20px",
-  fontSize: "12px",
-  fontWeight: "700",
-};
+    <span>{title}</span>
+    <strong>{value}</strong>
+  </div>
+);
 
 export default Results;

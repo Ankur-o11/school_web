@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "../Style/teacher-salary.css";
-import { API_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 function TeacherSalary() {
+  const { fetchWithAuth } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [salaryRecords, setSalaryRecords] = useState([]);
 
@@ -40,9 +41,7 @@ function TeacherSalary() {
 
   const fetchTeachers = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teachers`
-      );
+      const response = await fetchWithAuth("/teachers");
 
       if (!response.ok) {
         throw new Error("Failed to fetch teachers");
@@ -69,9 +68,7 @@ function TeacherSalary() {
 
   const fetchSalaryRecords = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-salary`
-      );
+      const response = await fetchWithAuth("/teacher-salary");
 
       if (!response.ok) {
         throw new Error("Failed to fetch salaries");
@@ -98,8 +95,8 @@ function TeacherSalary() {
     setCalculating(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
+      const response = await fetchWithAuth(
+        `/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
       );
 
       const data = await response.json();
@@ -142,13 +139,8 @@ function TeacherSalary() {
     setSaving(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-salary`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetchWithAuth("/teacher-salary", {
+        method: "POST",
           body: JSON.stringify({
             teacherId: Number(selectedTeacher),
             month: selectedMonth,
@@ -208,13 +200,8 @@ function TeacherSalary() {
     setPaying(true);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-salary/${salary.id}/payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetchWithAuth(`/teacher-salary/${salary.id}/payment`, {
+        method: "POST",
           body: JSON.stringify({
             amount,
             type: paymentType,
@@ -260,12 +247,9 @@ function TeacherSalary() {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-salary/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetchWithAuth(`/teacher-salary/${id}`, {
+        method: "DELETE",
+      });
 
       const data = await response.json();
 

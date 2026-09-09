@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../Style/Results.css";
-import { SERVER_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
-const API_URL = SERVER_BASE_URL;
 const EXAM_STORAGE_KEY = "mpsa_results_exams";
 const SESSION = "2026-27";
 
@@ -124,6 +123,7 @@ const parseListResponse = (data, key) => {
 ========================================================= */
 
 const Results = () => {
+  const { fetchWithAuth } = useAuth();
   const [students, setStudents] = useState([]);
   const [results, setResults] = useState([]);
   const [subjects, setSubjects] = useState([]);
@@ -178,9 +178,9 @@ const Results = () => {
     try {
       const [studentsRes, resultsRes, subjectsRes] =
         await Promise.all([
-          fetch(`${API_URL}/api/students`),
-          fetch(`${API_URL}/api/results`),
-          fetch(`${API_URL}/api/subjects`),
+          fetchWithAuth("/students"),
+          fetchWithAuth("/results"),
+          fetchWithAuth("/subjects"),
         ]);
 
       if (studentsRes.ok) {
@@ -475,9 +475,7 @@ const Results = () => {
       let list = subjects;
 
       if (!list.length) {
-        const response = await fetch(
-          `${API_URL}/api/subjects`
-        );
+        const response = await fetchWithAuth("/subjects");
 
         if (response.ok) {
           const data = await response.json();
@@ -606,8 +604,8 @@ const Results = () => {
     let savedMarks = {};
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/results/student/${getStudentId(student)}`
+      const response = await fetchWithAuth(
+        `/results/student/${getStudentId(student)}`
       );
 
       if (response.ok) {
@@ -642,8 +640,8 @@ const Results = () => {
     try {
       const [resultResponse, subjectList] =
         await Promise.all([
-          fetch(
-            `${API_URL}/api/results/student/${getStudentId(
+          fetchWithAuth(
+            `/results/student/${getStudentId(
               selectedStudent
             )}`
           ),
@@ -767,27 +765,17 @@ const Results = () => {
         })
       );
 
-      const response = await fetch(
-        `${API_URL}/api/results/exam`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            studentId: getStudentId(selectedStudent),
-            exam: selectedExam,
-            session: SESSION,
-            internalMax: Number(
-              currentExam.internalMax
-            ),
-            externalMax: Number(
-              currentExam.externalMax
-            ),
-            subjects: subjectData,
-          }),
-        }
-      );
+      const response = await fetchWithAuth("/results/exam", {
+        method: "POST",
+        body: JSON.stringify({
+          studentId: getStudentId(selectedStudent),
+          exam: selectedExam,
+          session: SESSION,
+          internalMax: Number(currentExam.internalMax),
+          externalMax: Number(currentExam.externalMax),
+          subjects: subjectData,
+        }),
+      });
 
       const data = await response.json();
 
@@ -803,8 +791,8 @@ const Results = () => {
 
       await refreshResults();
 
-      const resultResponse = await fetch(
-        `${API_URL}/api/results/student/${getStudentId(
+      const resultResponse = await fetchWithAuth(
+        `/results/student/${getStudentId(
           selectedStudent
         )}`
       );
@@ -827,9 +815,7 @@ const Results = () => {
 
   const refreshResults = async () => {
     try {
-      const response = await fetch(
-        `${API_URL}/api/results`
-      );
+      const response = await fetchWithAuth("/results");
 
       if (!response.ok) return;
 
@@ -857,8 +843,8 @@ const Results = () => {
       setError("");
       setMessage("");
 
-      const response = await fetch(
-        `${API_URL}/api/results/student/${getStudentId(student)}`
+      const response = await fetchWithAuth(
+        `/results/student/${getStudentId(student)}`
       );
 
       if (!response.ok) {

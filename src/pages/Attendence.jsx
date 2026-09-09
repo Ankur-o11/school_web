@@ -1,11 +1,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import "../Style/attendance.css";
-import { SERVER_BASE_URL } from "../config/api";
-
-const API = SERVER_BASE_URL;
+import { useAuth } from "../context/AuthContext";
 
 function Attendance() {
+  const { fetchWithAuth } = useAuth();
   // =====================================================
   // STATE
   // =====================================================
@@ -155,7 +154,7 @@ function Attendance() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`${API}/api/students`);
+      const response = await fetchWithAuth("/students");
 
       const data = await response.json();
 
@@ -191,8 +190,8 @@ function Attendance() {
 
   const loadHolidays = async () => {
     try {
-      const response = await fetch(
-        `${API}/api/student-attendance/holidays`
+      const response = await fetchWithAuth(
+        "/student-attendance/holidays"
       );
 
       const data = await response.json();
@@ -225,8 +224,8 @@ function Attendance() {
     }
 
     try {
-      const response = await fetch(
-        `${API}/api/student-attendance/date/${date}`
+      const response = await fetchWithAuth(
+        `/student-attendance/date/${date}`
       );
 
       const data = await response.json();
@@ -281,8 +280,8 @@ function Attendance() {
     try {
       setReportLoading(true);
 
-      const response = await fetch(
-        `${API}/api/student-attendance/month/${month}`
+      const response = await fetchWithAuth(
+        `/student-attendance/month/${month}`
       );
 
       const data = await response.json();
@@ -614,16 +613,10 @@ function Attendance() {
         })
       );
 
-      const response = await fetch(
-        `${API}/api/student-attendance`,
+      const response = await fetchWithAuth(
+        "/student-attendance",
         {
           method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
           body: JSON.stringify({
             records,
           }),
@@ -971,16 +964,10 @@ function Attendance() {
           "School Holiday",
       };
 
-      const response = await fetch(
-        `${API}/api/student-attendance/holiday`,
+      const response = await fetchWithAuth(
+        "/student-attendance/holiday",
         {
           method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
           body: JSON.stringify(holiday),
         }
       );
@@ -1068,8 +1055,8 @@ function Attendance() {
       setHolidayLoading(true);
 
       if (holidayId) {
-        const response = await fetch(
-          `${API}/api/student-attendance/holiday/${holidayId}`,
+        const response = await fetchWithAuth(
+          `/student-attendance/holiday/${holidayId}`,
           {
             method: "DELETE",
           }

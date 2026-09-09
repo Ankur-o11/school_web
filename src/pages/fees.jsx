@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import "../Style/fees.css";
-import { API_BASE_URL } from "../config/api";
-
-const API_URL = API_BASE_URL;
+import { useAuth } from "../context/AuthContext";
 
 function Fees() {
+  const { fetchWithAuth } = useAuth();
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState("");
 
@@ -74,9 +73,7 @@ function Fees() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `${API_URL}/fees`
-      );
+      const response = await fetchWithAuth("/fees");
 
       if (!response.ok) {
         throw new Error(
@@ -117,9 +114,7 @@ function Fees() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(
-        `${API_URL}/fees/stats`
-      );
+      const response = await fetchWithAuth("/fees/stats");
 
       if (!response.ok) {
         throw new Error(
@@ -311,16 +306,10 @@ function Fees() {
     try {
       setSaving(true);
 
-      const response = await fetch(
-        `${API_URL}/fees/student/${selectedStudent.id}`,
+      const response = await fetchWithAuth(
+        `/fees/student/${selectedStudent.id}`,
         {
           method: "PUT",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
           body: JSON.stringify({
             totalFees,
             discount:
@@ -348,12 +337,8 @@ function Fees() {
 
       await refreshFees();
 
-      const updatedStudents =
-        await fetch(
-          `${API_URL}/fees`
-        ).then((res) =>
-          res.json()
-        );
+      const updatedStudentsRes = await fetchWithAuth("/fees");
+      const updatedStudents = await updatedStudentsRes.json();
 
       const list =
         updatedStudents.students ||
@@ -487,26 +472,17 @@ function Fees() {
       // First update fee structure
       // -------------------------------------------------
 
-      const feeResponse =
-        await fetch(
-          `${API_URL}/fees/student/${selectedStudent.id}`,
-          {
-            method: "PUT",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              totalFees,
-              discount:
-                discountAmount,
-              academicYear:
-                selectedStudent.academicYear,
-            }),
-          }
-        );
+      const feeResponse = await fetchWithAuth(
+        `/fees/student/${selectedStudent.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            totalFees,
+            discount: discountAmount,
+            academicYear: selectedStudent.academicYear,
+          }),
+        }
+      );
 
       const feeData =
         await feeResponse.json();
@@ -523,25 +499,17 @@ function Fees() {
       // Then make payment
       // -------------------------------------------------
 
-      const paymentResponse =
-        await fetch(
-          `${API_URL}/fees/student/${selectedStudent.id}/payment`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              amount,
-              mode: paymentMode,
-              academicYear:
-                selectedStudent.academicYear,
-            }),
-          }
-        );
+      const paymentResponse = await fetchWithAuth(
+        `/fees/student/${selectedStudent.id}/payment`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            amount,
+            mode: paymentMode,
+            academicYear: selectedStudent.academicYear,
+          }),
+        }
+      );
 
       const paymentData =
         await paymentResponse.json();
@@ -572,10 +540,7 @@ function Fees() {
         selectedStudent;
 
       try {
-        const refreshed =
-          await fetch(
-            `${API_URL}/fees`
-          );
+        const refreshed = await fetchWithAuth("/fees");
 
         const refreshedData =
           await refreshed.json();

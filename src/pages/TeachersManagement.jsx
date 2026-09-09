@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import "../Style/teachers-management.css";
-import { API_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 function TeachersManagement() {
+  const { fetchWithAuth } = useAuth();
+
   const emptyForm = {
     name: "",
     father: "",
@@ -30,9 +32,7 @@ function TeachersManagement() {
 
   const loadTeachers = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teachers`
-      );
+      const response = await fetchWithAuth("/teachers");
 
       const data = await response.json();
 
@@ -161,18 +161,13 @@ function TeachersManagement() {
             : `MPSA-T-${Date.now()}`,
       };
 
-      const url =
+      const path =
         editingId !== null
-          ? `${API_BASE_URL}/teachers/${editingId}`
-          : `${API_BASE_URL}/teachers`;
+          ? `/teachers/${editingId}`
+          : "/teachers";
 
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(path, {
         method: editingId !== null ? "PUT" : "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
         body: JSON.stringify(teacherData),
       });
 
@@ -215,8 +210,8 @@ function TeachersManagement() {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teachers/${id}`,
+      const response = await fetchWithAuth(
+        `/teachers/${id}`,
         {
           method: "DELETE",
         }

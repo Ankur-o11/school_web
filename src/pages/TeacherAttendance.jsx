@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import "../Style/teacher-attendance.css";
-import { API_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 function TeacherAttendance() {
+  const { fetchWithAuth } = useAuth();
   const [teachers, setTeachers] = useState([]);
   const [attendance, setAttendance] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,9 +37,7 @@ function TeacherAttendance() {
 
   const fetchTeachers = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/teachers`
-      );
+      const response = await fetchWithAuth("/teachers");
 
       if (!response.ok) {
         throw new Error("Failed to fetch teachers");
@@ -66,8 +65,8 @@ function TeacherAttendance() {
     try {
       const month = date.substring(0, 7);
 
-      const response = await fetch(
-        `${API_BASE_URL}/teacher-attendance/month/${month}`
+      const response = await fetchWithAuth(
+        `/teacher-attendance/month/${month}`
       );
 
       if (!response.ok) {
@@ -206,14 +205,10 @@ function TeacherAttendance() {
           continue;
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/teacher-attendance`,
+        const response = await fetchWithAuth(
+          "/teacher-attendance",
           {
             method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-            },
 
             body: JSON.stringify({
               teacherId: teacher.id,

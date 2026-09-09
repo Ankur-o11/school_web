@@ -7,7 +7,7 @@ import { API_BASE_URL } from "../config/api";
 import "../Style/ui.css";
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, fetchWithAuth } = useAuth();
   const navigate = useNavigate();
 
   const [metrics, setMetrics] = useState({
@@ -19,29 +19,32 @@ export function Dashboard() {
 
   useEffect(() => {
     // Fetch live metrics from existing APIs safely
-    fetch(`${API_BASE_URL}/students`)
+    fetchWithAuth("/students")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setMetrics((prev) => ({ ...prev, totalStudents: data.length }));
+        const list = Array.isArray(data) ? data : data?.students || data?.data || [];
+        if (Array.isArray(list)) {
+          setMetrics((prev) => ({ ...prev, totalStudents: list.length }));
         }
       })
       .catch(() => {});
 
-    fetch(`${API_BASE_URL}/teachers`)
+    fetchWithAuth("/teachers")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setMetrics((prev) => ({ ...prev, totalTeachers: data.length }));
+        const list = Array.isArray(data) ? data : data?.teachers || data?.data || [];
+        if (Array.isArray(list)) {
+          setMetrics((prev) => ({ ...prev, totalTeachers: list.length }));
         }
       })
       .catch(() => {});
 
-    fetch(`${API_BASE_URL}/classes`)
+    fetchWithAuth("/classes")
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) {
-          setMetrics((prev) => ({ ...prev, totalClasses: data.length }));
+        const list = Array.isArray(data) ? data : data?.classes || data?.data || [];
+        if (Array.isArray(list)) {
+          setMetrics((prev) => ({ ...prev, totalClasses: list.length }));
         }
       })
       .catch(() => {});

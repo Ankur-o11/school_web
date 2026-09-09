@@ -15,7 +15,7 @@ import {
 } from "./modules/students/students.controller.js";
 import {
   setAdmissionsDatabase,
-} from "./modules/admissions/admissions.controller.js";
+} from "./modules/admissions/admissions.service.js";
 
 import { seedInitialAdmin } from "./modules/auth/auth.controller.js";
 

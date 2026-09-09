@@ -5,7 +5,10 @@ import {
   updateChecklist,
   updateAdmissionStatus,
   confirmAndCreateStudent,
+  setAdmissionsDatabase,
 } from "./admissions.service.js";
+
+export { setAdmissionsDatabase };
 
 // GET /api/admissions
 export async function listAdmissions(req, res) {

@@ -1,683 +1,234 @@
+import { useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import ActionMenu from "../components/ui/ActionMenu";
+import Modal from "../components/ui/Modal";
+import "../Style/ui.css";
 
-import React, { useEffect, useMemo, useState } from "react";
-import "../Style/admission.css";
-
-const API = "http://localhost:5000";
-
-const classes = [
-  "Nursery",
-  "LKG",
-  "UKG",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "11",
-  "12",
+const INITIAL_APPLICATIONS = [
+  {
+    id: "ADM-2026-001",
+    applicantName: "Kabir Mehra",
+    appliedClass: "Class 1",
+    parentName: "Vikram Mehra",
+    parentPhone: "+91 9876501234",
+    appliedDate: "2026-09-01",
+    prevSchool: "St. Xavier Junior School",
+    status: "Under Review"
+  },
+  {
+    id: "ADM-2026-002",
+    applicantName: "Diya Sengupta",
+    appliedClass: "Class 9",
+    parentName: "Amit Sengupta",
+    parentPhone: "+91 9812304567",
+    appliedDate: "2026-09-03",
+    prevSchool: "Delhi Public School",
+    status: "Pending"
+  },
+  {
+    id: "ADM-2026-003",
+    applicantName: "Arjun Nair",
+    appliedClass: "Class 11 Science",
+    parentName: "Rajesh Nair",
+    parentPhone: "+91 9898901234",
+    appliedDate: "2026-08-28",
+    prevSchool: "Modern High School",
+    status: "Approved"
+  }
 ];
 
-const sessions = ["2026-27", "2027-28", "2028-29"];
+export function Admission() {
+  const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
 
-const emptyForm = {
-  session: "2026-27",
-  admissionType: "New",
-  studentName: "",
-  dob: "",
-  gender: "",
-  bloodGroup: "",
-  className: "",
-  section: "",
-  fatherName: "",
-  motherName: "",
-  phone: "",
-  alternateMobile: "",
-  email: "",
-  address: "",
-  previousSchool: "",
-  aadhaar: "",
-  penNo: "",
-  admissionDate: new Date().toISOString().split("T")[0],
-  admissionNo: "",
-  receiptNo: "",
-  rollNo: "",
-};
+  const [formData, setFormData] = useState({
+    applicantName: "",
+    appliedClass: "Class 1",
+    parentName: "",
+    parentPhone: "",
+    prevSchool: ""
+  });
 
-function Admission() {
-  const [formData, setFormData] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [receiptLoading, setReceiptLoading] = useState(false);
-  const [successStudent, setSuccessStudent] = useState(null);
-
-  const schoolName = useMemo(() => {
-    if (["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5"].includes(formData.className)) {
-      return "MAHARANA PRATAP SCIENCE ACADEMY UCCHATAR MADHIMIK JALAUN";
-    }
-
-    return "MAHARANA PRATAP SCIENCE ACADEMY INTER COLLEGE JALAUN";
-  }, [formData.className]);
-
-  const isPrimary = ["Nursery", "LKG", "UKG", "1", "2", "3", "4", "5"].includes(
-    formData.className
-  );
-
-  useEffect(() => {
-    loadNextReceipt();
-  }, []);
-
-  const loadNextReceipt = async () => {
-    try {
-      setReceiptLoading(true);
-
-      const response = await fetch(`${API}/api/admissions/next-receipt`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setFormData((prev) => ({
-          ...prev,
-          receiptNo: data.receiptNo,
-        }));
-      }
-    } catch (error) {
-      console.error("Receipt loading error:", error);
-    } finally {
-      setReceiptLoading(false);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const resetForm = async () => {
-    setFormData({
-      ...emptyForm,
-      session: "2026-27",
-      admissionDate: new Date().toISOString().split("T")[0],
-    });
-
-    await loadNextReceipt();
-  };
-
-  const handleSubmit = async (e) => {
+  const handleCreateApplication = (e) => {
     e.preventDefault();
-
-    if (
-      !formData.studentName.trim() ||
-      !formData.fatherName.trim() ||
-      !formData.motherName.trim() ||
-      !formData.dob ||
-      !formData.gender ||
-      !formData.className ||
-      !formData.section ||
-      !formData.phone.trim() ||
-      !formData.address.trim() ||
-      !formData.admissionDate
-    ) {
-      alert("Please fill all required fields.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const studentData = {
-        name: formData.studentName.trim(),
-        father: formData.fatherName.trim(),
-        mother: formData.motherName.trim(),
-
-        dob: formData.dob,
-        gender: formData.gender,
-        bloodGroup: formData.bloodGroup,
-
-        aadhaar: formData.aadhaar.trim(),
-        penNo: formData.penNo.trim(),
-
-        admissionNo: formData.admissionNo.trim(),
-        admissionDate: formData.admissionDate,
-
-        session: formData.session,
-        admissionType: formData.admissionType,
-
-        class: formData.className,
-        section: formData.section,
-        rollNo: formData.rollNo.trim(),
-
-        mobile: formData.phone.trim(),
-        alternateMobile: formData.alternateMobile.trim(),
-
-        email: formData.email.trim(),
-        address: formData.address.trim(),
-        previousSchool: formData.previousSchool.trim(),
-
-        receiptNo: formData.receiptNo,
-
-        status: "Active",
-      };
-
-      const response = await fetch(`${API}/api/students`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(studentData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Admission failed");
-      }
-
-      setSuccessStudent(data.student);
-
-      alert(
-        `Admission successful!\n\nStudent: ${data.student.name}\nReceipt No: ${data.student.receiptNo}`
-      );
-
-      await resetForm();
-    } catch (error) {
-      console.error("Admission error:", error);
-
-      alert(
-        error.message ||
-          "Unable to save admission. Please check backend server."
-      );
-    } finally {
-      setSaving(false);
-    }
+    const newApp = {
+      id: `ADM-2026-0${applications.length + 1}`,
+      applicantName: formData.applicantName,
+      appliedClass: formData.appliedClass,
+      parentName: formData.parentName,
+      parentPhone: formData.parentPhone,
+      appliedDate: new Date().toISOString().split("T")[0],
+      prevSchool: formData.prevSchool || "N/A",
+      status: "Pending"
+    };
+    setApplications([newApp, ...applications]);
+    setIsModalOpen(false);
+    setFormData({ applicantName: "", appliedClass: "Class 1", parentName: "", parentPhone: "", prevSchool: "" });
   };
+
+  const updateStatus = (id, status) => {
+    setApplications(
+      applications.map((a) => (a.id === id ? { ...a, status } : a))
+    );
+  };
+
+  const columns = [
+    { header: "Application ID", accessor: "id", render: (row) => <strong>{row.id}</strong> },
+    { header: "Applicant Name", accessor: "applicantName" },
+    { header: "Applied Class", accessor: "appliedClass" },
+    { header: "Parent Name", accessor: "parentName" },
+    { header: "Contact Phone", accessor: "parentPhone" },
+    { header: "Applied Date", accessor: "appliedDate" },
+    { header: "Status", accessor: "status", render: (row) => <StatusBadge status={row.status} /> },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <ActionMenu
+          actions={[
+            { label: "View Application", icon: "👁️", onClick: () => setSelectedApp(row) },
+            { label: "Approve Admission", icon: "✅", onClick: () => updateStatus(row.id, "Approved") },
+            { label: "Reject Application", icon: "❌", danger: true, onClick: () => updateStatus(row.id, "Rejected") }
+          ]}
+        />
+      )
+    }
+  ];
 
   return (
-    <div className="admission-page">
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Admissions"
+        title="Student Admissions Portal"
+        description="Process new student registration, view application statuses, approve or reject applications."
+        icon="🎓"
+        primaryAction={{
+          label: "New Registration",
+          icon: "+",
+          onClick: () => setIsModalOpen(true)
+        }}
+      />
 
-      {/* SCHOOL HEADER */}
-      <div className="admission-school-header">
+      <StatGrid>
+        <StatCard title="Total Applications" value={applications.length} icon="🎓" />
+        <StatCard title="Pending Review" value={applications.filter((a) => a.status === "Pending" || a.status === "Under Review").length} icon="⏳" />
+        <StatCard title="Approved Admissions" value={applications.filter((a) => a.status === "Approved").length} icon="✅" />
+        <StatCard title="Rejected / Ineligible" value={applications.filter((a) => a.status === "Rejected").length} icon="❌" />
+      </StatGrid>
 
-        <div className="school-emblem">🎓</div>
+      <DataTable
+        columns={columns}
+        data={applications}
+        searchPlaceholder="Search applicant, parent name, ID..."
+        filters={[
+          { key: "status", label: "Status", options: [{ value: "Pending", label: "Pending" }, { value: "Under Review", label: "Under Review" }, { value: "Approved", label: "Approved" }, { value: "Rejected", label: "Rejected" }] }
+        ]}
+      />
 
-        <div>
-          <h1>{schoolName}</h1>
-
-          <p>
-            NEW ADMISSION FORM
-          </p>
-
-          <span>
-            Session {formData.session}
-          </span>
-        </div>
-
-      </div>
-
-      {/* TOP INFO */}
-      <div className="admission-top-bar">
-
-        <div>
-          <span>Form Type</span>
-          <strong>Student Admission</strong>
-        </div>
-
-        <div>
-          <span>Admission Type</span>
-          <strong
-            className={
-              formData.admissionType === "New"
-                ? "new-badge"
-                : "old-badge"
-            }
-          >
-            {formData.admissionType} Student
-          </strong>
-        </div>
-
-        <div>
-          <span>Receipt No.</span>
-          <strong>
-            {receiptLoading
-              ? "Generating..."
-              : formData.receiptNo || "Auto"}
-          </strong>
-        </div>
-
-      </div>
-
-      {/* FORM */}
-      <form onSubmit={handleSubmit}>
-
-        {/* SESSION */}
-        <section className="admission-card">
-
-          <div className="section-heading">
-            <div className="section-icon">📅</div>
-
-            <div>
-              <h2>Admission Session & Type</h2>
-              <p>Select academic session and admission category</p>
+      {/* New Application Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="New Student Admission Application"
+        footer={
+          <>
+            <button className="ui-btn ui-btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <button className="ui-btn ui-btn-primary" onClick={handleCreateApplication}>Submit Application</button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateApplication}>
+          <div className="ui-form-row">
+            <div className="ui-form-group">
+              <label>Applicant Full Name *</label>
+              <input
+                type="text"
+                className="ui-form-control"
+                placeholder="Student Name"
+                value={formData.applicantName}
+                onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
+                required
+              />
             </div>
-          </div>
-
-          <div className="form-grid">
-
-            <div className="form-field">
-              <label>Academic Session *</label>
-
+            <div className="ui-form-group">
+              <label>Applying for Class *</label>
               <select
-                name="session"
-                value={formData.session}
-                onChange={handleChange}
+                className="ui-form-control"
+                value={formData.appliedClass}
+                onChange={(e) => setFormData({ ...formData, appliedClass: e.target.value })}
               >
-                {sessions.map((session) => (
-                  <option key={session} value={session}>
-                    {session}
-                  </option>
-                ))}
+                <option value="Nursery">Nursery / LKG</option>
+                <option value="Class 1">Class 1</option>
+                <option value="Class 5">Class 5</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 11 Science">Class 11 Science</option>
+                <option value="Class 11 Commerce">Class 11 Commerce</option>
               </select>
             </div>
+          </div>
 
-            <div className="form-field">
-              <label>Student Type *</label>
-
-              <select
-                name="admissionType"
-                value={formData.admissionType}
-                onChange={handleChange}
-              >
-                <option value="New">New Student</option>
-                <option value="Old">Old Student</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Admission Date *</label>
-
-              <input
-                type="date"
-                name="admissionDate"
-                value={formData.admissionDate}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Receipt Number</label>
-
+          <div className="ui-form-row">
+            <div className="ui-form-group">
+              <label>Parent / Guardian Name *</label>
               <input
                 type="text"
-                name="receiptNo"
-                value={formData.receiptNo}
-                readOnly
-                className="readonly-field"
+                className="ui-form-control"
+                placeholder="Parent Name"
+                value={formData.parentName}
+                onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                required
               />
             </div>
-
-          </div>
-        </section>
-
-        {/* STUDENT INFORMATION */}
-        <section className="admission-card">
-
-          <div className="section-heading">
-            <div className="section-icon">👨‍🎓</div>
-
-            <div>
-              <h2>Student Information</h2>
-              <p>Enter complete student personal information</p>
-            </div>
-          </div>
-
-          <div className="form-grid">
-
-            <div className="form-field">
-              <label>Student Name *</label>
-
+            <div className="ui-form-group">
+              <label>Parent Phone Number *</label>
               <input
                 type="text"
-                name="studentName"
-                value={formData.studentName}
-                onChange={handleChange}
-                placeholder="Enter student's full name"
+                className="ui-form-control"
+                placeholder="+91 Mobile No"
+                value={formData.parentPhone}
+                onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
+                required
               />
-            </div>
-
-            <div className="form-field">
-              <label>Date of Birth *</label>
-
-              <input
-                type="date"
-                name="dob"
-                value={formData.dob}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Gender *</label>
-
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Blood Group</label>
-
-              <select
-                name="bloodGroup"
-                value={formData.bloodGroup}
-                onChange={handleChange}
-              >
-                <option value="">Select Blood Group</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Class *</label>
-
-              <select
-                name="className"
-                value={formData.className}
-                onChange={handleChange}
-              >
-                <option value="">Select Class</option>
-
-                {classes.map((item) => (
-                  <option key={item} value={item}>
-                    {item === "Nursery" ||
-                    item === "LKG" ||
-                    item === "UKG"
-                      ? item
-                      : `Class ${item}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Section *</label>
-
-              <select
-                name="section"
-                value={formData.section}
-                onChange={handleChange}
-              >
-                <option value="">Select Section</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-              </select>
-            </div>
-
-            <div className="form-field">
-              <label>Roll Number</label>
-
-              <input
-                type="text"
-                name="rollNo"
-                value={formData.rollNo}
-                onChange={handleChange}
-                placeholder="Enter roll number"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Admission Number</label>
-
-              <input
-                type="text"
-                name="admissionNo"
-                value={formData.admissionNo}
-                onChange={handleChange}
-                placeholder="e.g. MPSA-2026-001"
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* PARENT */}
-        <section className="admission-card">
-
-          <div className="section-heading">
-            <div className="section-icon">👨‍👩‍👦</div>
-
-            <div>
-              <h2>Parent / Guardian Information</h2>
-              <p>Enter parent and contact details</p>
             </div>
           </div>
 
-          <div className="form-grid">
-
-            <div className="form-field">
-              <label>Father's Name *</label>
-
-              <input
-                type="text"
-                name="fatherName"
-                value={formData.fatherName}
-                onChange={handleChange}
-                placeholder="Enter father's name"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Mother's Name *</label>
-
-              <input
-                type="text"
-                name="motherName"
-                value={formData.motherName}
-                onChange={handleChange}
-                placeholder="Enter mother's name"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Mobile Number *</label>
-
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter mobile number"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Alternate Mobile</label>
-
-              <input
-                type="tel"
-                name="alternateMobile"
-                value={formData.alternateMobile}
-                onChange={handleChange}
-                placeholder="Enter alternate mobile"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>Email Address</label>
-
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email address"
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* IDENTITY */}
-        <section className="admission-card">
-
-          <div className="section-heading">
-            <div className="section-icon">🪪</div>
-
-            <div>
-              <h2>Identity Information</h2>
-              <p>Government and school identification details</p>
-            </div>
-          </div>
-
-          <div className="form-grid">
-
-            <div className="form-field">
-              <label>Aadhaar Number</label>
-
-              <input
-                type="text"
-                name="aadhaar"
-                value={formData.aadhaar}
-                onChange={handleChange}
-                placeholder="Enter Aadhaar number"
-                maxLength="12"
-              />
-            </div>
-
-            <div className="form-field">
-              <label>PEN Number</label>
-
-              <input
-                type="text"
-                name="penNo"
-                value={formData.penNo}
-                onChange={handleChange}
-                placeholder="Enter PEN number"
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* ADDRESS */}
-        <section className="admission-card">
-
-          <div className="section-heading">
-            <div className="section-icon">🏠</div>
-
-            <div>
-              <h2>Address & Previous School</h2>
-              <p>Enter residential and previous academic details</p>
-            </div>
-          </div>
-
-          <div className="form-field full-field">
-            <label>Complete Address *</label>
-
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter complete residential address"
-              rows="4"
-            />
-          </div>
-
-          <div className="form-field full-field">
-            <label>Previous School</label>
-
+          <div className="ui-form-group">
+            <label>Previous School Attended</label>
             <input
               type="text"
-              name="previousSchool"
-              value={formData.previousSchool}
-              onChange={handleChange}
-              placeholder="Enter previous school name"
+              className="ui-form-control"
+              placeholder="Previous School Name"
+              value={formData.prevSchool}
+              onChange={(e) => setFormData({ ...formData, prevSchool: e.target.value })}
             />
           </div>
+        </form>
+      </Modal>
 
-        </section>
-
-        {/* ACTIONS */}
-        <div className="admission-actions">
-
-          <button
-            type="button"
-            className="reset-admission-btn"
-            onClick={resetForm}
-          >
-            ↻ Reset Form
-          </button>
-
-          <button
-            type="submit"
-            className="submit-admission-btn"
-            disabled={saving}
-          >
-            {saving ? "Saving Admission..." : "🎓 Save New Admission"}
-          </button>
-
-        </div>
-
-      </form>
-
-      {/* SUCCESS */}
-      {successStudent && (
-        <div className="success-box">
-
-          <div className="success-icon">✓</div>
-
-          <div>
-            <h3>Admission Saved Successfully</h3>
-
-            <p>
-              <strong>{successStudent.name}</strong> has been added to
-              the Students database.
-            </p>
-
-            <div className="success-details">
-              <span>
-                Receipt: <strong>{successStudent.receiptNo}</strong>
-              </span>
-
-              <span>
-                Class:{" "}
-                <strong>
-                  {successStudent.class}-{successStudent.section}
-                </strong>
-              </span>
-            </div>
+      {/* Application Detail View Modal */}
+      <Modal
+        isOpen={!!selectedApp}
+        onClose={() => setSelectedApp(null)}
+        title={`Application: ${selectedApp?.id}`}
+        footer={
+          <button className="ui-btn ui-btn-secondary" onClick={() => setSelectedApp(null)}>Close</button>
+        }
+      >
+        {selectedApp && (
+          <div style={{ fontSize: "14px", lineHeight: "1.8" }}>
+            <p><strong>Applicant Name:</strong> {selectedApp.applicantName}</p>
+            <p><strong>Applied Class:</strong> {selectedApp.appliedClass}</p>
+            <p><strong>Parent / Guardian:</strong> {selectedApp.parentName} ({selectedApp.parentPhone})</p>
+            <p><strong>Previous Institution:</strong> {selectedApp.prevSchool}</p>
+            <p><strong>Application Date:</strong> {selectedApp.appliedDate}</p>
+            <p><strong>Current Status:</strong> <StatusBadge status={selectedApp.status} /></p>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setSuccessStudent(null)}
-          >
-            ✕
-          </button>
-
-        </div>
-      )}
-
+        )}
+      </Modal>
     </div>
   );
 }

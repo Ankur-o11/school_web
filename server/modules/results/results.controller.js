@@ -1,7 +1,3 @@
-// =====================================================
-// RESULTS CONTROLLER
-// =====================================================
-
 import {
   createResult,
   getAllResults,
@@ -11,9 +7,23 @@ import {
   updatePublishStatus,
 } from "./results.service.js";
 
-// =====================================================
-// CREATE
-// =====================================================
+// Helper for data-level filters
+function applyResultDataScoping(req, query = {}) {
+  const scopedQuery = { ...query };
+  if (!req.user || req.user.role === "Admin" || req.user.permissions?.includes("*")) {
+    return scopedQuery;
+  }
+
+  if (req.user.role === "Student") {
+    scopedQuery.studentId = req.user.id;
+  } else if (req.user.role === "Parent") {
+    scopedQuery.studentId = { $in: req.user.assignedChildren || [] };
+  } else if (req.user.role === "Teacher" && req.user.assignedClasses?.length > 0) {
+    scopedQuery.className = { $in: req.user.assignedClasses };
+  }
+
+  return scopedQuery;
+}
 
 export async function create(req, res, next) {
   try {
@@ -29,13 +39,10 @@ export async function create(req, res, next) {
   }
 }
 
-// =====================================================
-// GET ALL
-// =====================================================
-
 export async function getAll(req, res, next) {
   try {
-    const results = await getAllResults(req.query);
+    const filters = applyResultDataScoping(req, req.query);
+    const results = await getAllResults(filters);
 
     res.json({
       success: true,
@@ -47,13 +54,28 @@ export async function getAll(req, res, next) {
   }
 }
 
-// =====================================================
-// GET ONE
-// =====================================================
-
 export async function getOne(req, res, next) {
   try {
     const result = await getResultById(req.params.id);
+
+    if (req.user && req.user.role === "Student") {
+      if (result.studentId !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden. Students can only view their own examination results.",
+        });
+      }
+    }
+
+    if (req.user && req.user.role === "Parent") {
+      const isAssigned = (req.user.assignedChildren || []).includes(result.studentId);
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden. Parents can only view results of linked children.",
+        });
+      }
+    }
 
     res.json({
       success: true,
@@ -63,10 +85,6 @@ export async function getOne(req, res, next) {
     next(error);
   }
 }
-
-// =====================================================
-// UPDATE
-// =====================================================
 
 export async function update(req, res, next) {
   try {
@@ -85,10 +103,6 @@ export async function update(req, res, next) {
   }
 }
 
-// =====================================================
-// DELETE
-// =====================================================
-
 export async function remove(req, res, next) {
   try {
     const result = await deleteResult(req.params.id);
@@ -102,16 +116,9 @@ export async function remove(req, res, next) {
   }
 }
 
-// =====================================================
-// PUBLISH
-// =====================================================
-
 export async function publish(req, res, next) {
   try {
-    const result = await updatePublishStatus(
-      req.params.id,
-      true
-    );
+    const result = await updatePublishStatus(req.params.id, true);
 
     res.json({
       success: true,
@@ -123,16 +130,9 @@ export async function publish(req, res, next) {
   }
 }
 
-// =====================================================
-// UNPUBLISH
-// =====================================================
-
 export async function unpublish(req, res, next) {
   try {
-    const result = await updatePublishStatus(
-      req.params.id,
-      false
-    );
+    const result = await updatePublishStatus(req.params.id, false);
 
     res.json({
       success: true,

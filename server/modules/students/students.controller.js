@@ -1,4 +1,4 @@
-﻿import {
+import {
   STUDENTS_COLLECTION,
   createStudentDocument,
   sanitizeStudent,
@@ -19,11 +19,43 @@ function collection() {
   return db.collection(STUDENTS_COLLECTION);
 }
 
+// Data-level authorization filter helper
+function buildDataAccessFilter(req) {
+  const filter = {};
+  if (!req.user || req.user.role === "Admin" || req.user.permissions?.includes("*")) {
+    return filter;
+  }
+
+  if (req.user.role === "Student") {
+    // Student can only access their own record
+    filter.$or = [
+      { _id: toObjectId(req.user.id) },
+      { id: req.user.id },
+      { admissionNumber: req.user.username },
+    ];
+  } else if (req.user.role === "Parent") {
+    // Parent can only access assigned children
+    const childrenIds = (req.user.assignedChildren || []).map((cId) => toObjectId(cId) || cId);
+    filter.$or = [
+      { _id: { $in: childrenIds } },
+      { id: { $in: req.user.assignedChildren || [] } },
+      { parentPhone: req.user.username },
+    ];
+  } else if (req.user.role === "Teacher" && req.user.assignedClasses?.length > 0) {
+    // Teacher can only access assigned classes
+    filter.className = { $in: req.user.assignedClasses };
+  }
+
+  return filter;
+}
+
 // GET /api/students
 export async function listStudents(req, res) {
   try {
+    const dataFilter = buildDataAccessFilter(req);
+
     const items = await collection()
-      .find({})
+      .find(dataFilter)
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -45,24 +77,39 @@ export async function listStudents(req, res) {
 // GET /api/students/:id
 export async function getStudent(req, res) {
   try {
-    const objectId = toObjectId(req.params.id);
+    const targetId = req.params.id;
+    const objectId = toObjectId(targetId);
 
-    if (!objectId) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid student ID",
-      });
+    // Data-level check for Student/Parent role
+    if (req.user && req.user.role === "Student") {
+      if (req.user.id !== targetId && targetId !== "me") {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden. Students can only access their own record.",
+        });
+      }
     }
 
-    const student = await collection().findOne({
-      _id: objectId,
-    });
+    const query = objectId ? { _id: objectId } : { id: targetId };
+    const student = await collection().findOne(query);
 
     if (!student) {
       return res.status(404).json({
         success: false,
         message: "Student not found",
       });
+    }
+
+    // Verify parent authorization
+    if (req.user && req.user.role === "Parent") {
+      const studentIdStr = student._id ? student._id.toString() : student.id;
+      const isAssigned = (req.user.assignedChildren || []).includes(studentIdStr);
+      if (!isAssigned) {
+        return res.status(403).json({
+          success: false,
+          message: "Access forbidden. Parents can only access their linked children.",
+        });
+      }
     }
 
     res.json({
@@ -234,14 +281,17 @@ export async function removeStudent(req, res) {
 export async function studentStats(req, res) {
   try {
     const students = collection();
+    const dataFilter = buildDataAccessFilter(req);
 
-    const total = await students.countDocuments();
+    const total = await students.countDocuments(dataFilter);
 
     const active = await students.countDocuments({
+      ...dataFilter,
       status: "Active",
     });
 
     const inactive = await students.countDocuments({
+      ...dataFilter,
       status: {
         $ne: "Active",
       },

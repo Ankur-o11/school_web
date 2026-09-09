@@ -1,208 +1,133 @@
-import "../Style/Notifications.css";
+import { useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import "../Style/ui.css";
 
-function Notifications() {
-  return (
-    <div className="notifications-page">
+const INITIAL_NOTIFICATIONS = [
+  {
+    id: "NOTIF-101",
+    title: "Monthly Fee Payment Received",
+    message: "Fee receipt #REC-9821 has been generated for Aarav Sharma (Class 10-A).",
+    category: "Fees",
+    timestamp: "10 minutes ago",
+    isRead: false
+  },
+  {
+    id: "NOTIF-102",
+    title: "Mid-Term Examination Result Published",
+    message: "Physics and Mathematics marksheets for Class 12-A have been published online.",
+    category: "Results",
+    timestamp: "1 hour ago",
+    isRead: false
+  },
+  {
+    id: "NOTIF-103",
+    title: "Daily Student Attendance Alert",
+    message: "Class 9-B attendance marked with 3 absent students.",
+    category: "Attendance",
+    timestamp: "3 hours ago",
+    isRead: true
+  },
+  {
+    id: "NOTIF-104",
+    title: "Staff Meeting Reminder",
+    message: "Principal has scheduled an emergency meeting in Conference Room 2.",
+    category: "General",
+    timestamp: "Yesterday",
+    isRead: true
+  }
+];
 
-      <div className="notifications-header">
+export function Notifications() {
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+
+  const markAllRead = () => {
+    setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+  };
+
+  const clearAll = () => {
+    setNotifications([]);
+  };
+
+  const columns = [
+    {
+      header: "Notification",
+      accessor: "title",
+      render: (row) => (
         <div>
-          <h1>🔔 Notifications</h1>
-          <p>
-            Manage school notifications and important updates.
-          </p>
+          <strong style={{ display: "block", color: row.isRead ? "var(--text-muted)" : "var(--text-main)" }}>
+            {!row.isRead && <span style={{ color: "#2563eb", marginRight: "6px" }}>●</span>}
+            {row.title}
+          </strong>
+          <span style={{ fontSize: "13px", color: "var(--text-muted)" }}>{row.message}</span>
         </div>
-
-        <button className="notifications-add-btn">
-          + New Notification
+      )
+    },
+    { header: "Category", accessor: "category", render: (row) => <span className="ui-badge ui-badge-purple">{row.category}</span> },
+    { header: "Time", accessor: "timestamp" },
+    {
+      header: "Status",
+      accessor: "isRead",
+      render: (row) => (
+        <StatusBadge status={row.isRead ? "Read" : "Unread"} type={row.isRead ? "neutral" : "warning"} />
+      )
+    },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <button
+          className="ui-btn ui-btn-secondary ui-btn-sm"
+          onClick={() =>
+            setNotifications(
+              notifications.map((n) => (n.id === row.id ? { ...n, isRead: true } : n))
+            )
+          }
+        >
+          Mark Read
         </button>
-      </div>
+      )
+    }
+  ];
 
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-      <div className="notifications-stats">
-
-        <div className="notification-stat-card">
-          <div className="notification-stat-icon">
-            🔔
-          </div>
-
-          <div>
-            <span>Total Notifications</span>
-            <strong>48</strong>
-          </div>
-        </div>
-
-
-        <div className="notification-stat-card">
-          <div className="notification-stat-icon">
-            📢
-          </div>
-
-          <div>
-            <span>Announcements</span>
-            <strong>18</strong>
-          </div>
-        </div>
-
-
-        <div className="notification-stat-card">
-          <div className="notification-stat-icon">
-            👨‍🎓
-          </div>
-
-          <div>
-            <span>Student Updates</span>
-            <strong>16</strong>
-          </div>
-        </div>
-
-
-        <div className="notification-stat-card">
-          <div className="notification-stat-icon">
-            👨‍🏫
-          </div>
-
-          <div>
-            <span>Staff Updates</span>
-            <strong>14</strong>
-          </div>
-        </div>
-
-      </div>
-
-
-      <div className="notifications-card">
-
-        <div className="notifications-card-header">
-
-          <div>
-            <h2>Recent Notifications</h2>
-            <p>
-              Latest notifications sent by school administration.
-            </p>
-          </div>
-
-          <input
-            type="text"
-            placeholder="Search notifications..."
-            className="notifications-search"
-          />
-
-        </div>
-
-
-        <div className="notifications-list">
-
-          <div className="notification-item">
-
-            <div className="notification-icon">
-              📢
-            </div>
-
-            <div className="notification-content">
-
-              <h3>Parent-Teacher Meeting</h3>
-
-              <p>
-                Parent-teacher meeting will be held on Saturday.
-              </p>
-
-              <span>
-                22 Aug 2026 • 10:30 AM
-              </span>
-
-            </div>
-
-            <button className="notification-view-btn">
-              View
+  return (
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Activity"
+        title="Notifications Center"
+        description="View system notifications, alerts, fee updates, and academic announcements."
+        icon="🔔"
+        secondaryActions={
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button className="ui-btn ui-btn-secondary" onClick={markAllRead}>
+              ✓ Mark All as Read
             </button>
-
-          </div>
-
-
-          <div className="notification-item">
-
-            <div className="notification-icon">
-              📅
-            </div>
-
-            <div className="notification-content">
-
-              <h3>Exam Schedule Released</h3>
-
-              <p>
-                The upcoming examination schedule has been published.
-              </p>
-
-              <span>
-                21 Aug 2026 • 02:15 PM
-              </span>
-
-            </div>
-
-            <button className="notification-view-btn">
-              View
+            <button className="ui-btn ui-btn-secondary" onClick={clearAll}>
+              🗑️ Clear Notifications
             </button>
-
           </div>
+        }
+      />
 
+      <StatGrid>
+        <StatCard title="Total Notifications" value={notifications.length} icon="🔔" />
+        <StatCard title="Unread Alerts" value={unreadCount} icon="🔴" />
+        <StatCard title="Fee & Financial Alerts" value={notifications.filter((n) => n.category === "Fees").length} icon="💰" />
+        <StatCard title="Academic Updates" value={notifications.filter((n) => n.category === "Results").length} icon="📝" />
+      </StatGrid>
 
-          <div className="notification-item">
-
-            <div className="notification-icon">
-              🏆
-            </div>
-
-            <div className="notification-content">
-
-              <h3>Annual Sports Day</h3>
-
-              <p>
-                Students are requested to register for sports activities.
-              </p>
-
-              <span>
-                20 Aug 2026 • 11:00 AM
-              </span>
-
-            </div>
-
-            <button className="notification-view-btn">
-              View
-            </button>
-
-          </div>
-
-
-          <div className="notification-item">
-
-            <div className="notification-icon">
-              💰
-            </div>
-
-            <div className="notification-content">
-
-              <h3>Fee Payment Reminder</h3>
-
-              <p>
-                Parents are requested to clear pending school fees.
-              </p>
-
-              <span>
-                19 Aug 2026 • 09:20 AM
-              </span>
-
-            </div>
-
-            <button className="notification-view-btn">
-              View
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
+      <DataTable
+        columns={columns}
+        data={notifications}
+        searchPlaceholder="Search notifications..."
+        filters={[
+          { key: "category", label: "Category", options: [{ value: "Fees", label: "Fees" }, { value: "Results", label: "Results" }, { value: "Attendance", label: "Attendance" }, { value: "General", label: "General" }] }
+        ]}
+      />
     </div>
   );
 }

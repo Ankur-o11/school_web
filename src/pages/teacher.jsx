@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../Style/teachers.css";
+import { useAuth } from "../context/AuthContext";
 
 function Teachers() {
+  const { fetchWithAuth } = useAuth();
   // =====================================================
   // SUBJECTS / CLASSES
   // =====================================================
@@ -78,315 +80,31 @@ function Teachers() {
   };
 
   // =====================================================
-  // SAMPLE DATA
+  // API LOAD TEACHERS
   // =====================================================
 
-  const [teachers, setTeachers] = useState([
-    {
-      id: 1,
-      name: "Rajesh Kumar",
-      father: "Mahesh Kumar",
-      mother: "Sunita Kumar",
-      dob: "1988-04-15",
-      gender: "Male",
-      bloodGroup: "B+",
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-      employeeId: "MPSA-T001",
-      subject: "Mathematics",
-      department: "Mathematics",
-      designation: "PGT",
-      qualification: "M.Sc Mathematics",
-      experience: "8 Years",
-      previousSchool: "Delhi Public School",
-      mobile: "9876543210",
-      alternateMobile: "9123456780",
-      email: "rajesh@mpsa.edu.in",
-      address: "Delhi, India",
+  const loadTeachers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchWithAuth("/teachers");
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      const data = await response.json();
+      setTeachers(data.data || data.teachers || []);
+    } catch (error) {
+      console.error("Error loading teachers from API:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      joiningDate: "2022-04-10",
-      resigningDate: "",
-      employmentType: "Permanent",
-      status: "Active",
-
-      isClassTeacher: true,
-      classTeacherClass: "8",
-      classTeacherSection: "A",
-
-      teachingClasses: "7,8,9,10",
-      teacherSubjects: "Mathematics",
-
-      aadhaar: "",
-      pan: "",
-
-      attendance: {
-        workingDays: 220,
-        present: 205,
-        absent: 8,
-        leave: 7,
-      },
-
-      classAttendance: {
-        className: "8",
-        section: "A",
-        totalStudents: 42,
-        present: 38,
-        absent: 4,
-      },
-
-      fees: {
-        totalFees: 500000,
-        discount: 20000,
-        collected: 420000,
-      },
-
-      timetable: [
-        {
-          day: "Monday",
-          period: "1",
-          time: "8:00 - 8:40",
-          className: "8",
-          section: "A",
-          subject: "Mathematics",
-          status: "Assigned",
-        },
-        {
-          day: "Monday",
-          period: "2",
-          time: "8:40 - 9:20",
-          className: "9",
-          section: "B",
-          subject: "Mathematics",
-          status: "Assigned",
-        },
-        {
-          day: "Monday",
-          period: "3",
-          time: "9:20 - 10:00",
-          className: "",
-          section: "",
-          subject: "",
-          status: "Free",
-        },
-        {
-          day: "Monday",
-          period: "4",
-          time: "10:00 - 10:40",
-          className: "10",
-          section: "A",
-          subject: "Mathematics",
-          status: "Assigned",
-        },
-        {
-          day: "Tuesday",
-          period: "1",
-          time: "8:00 - 8:40",
-          className: "7",
-          section: "A",
-          subject: "Mathematics",
-          status: "Assigned",
-        },
-        {
-          day: "Tuesday",
-          period: "2",
-          time: "8:40 - 9:20",
-          className: "",
-          section: "",
-          subject: "",
-          status: "Free",
-        },
-      ],
-
-      urgentDuties: [
-        {
-          date: "2026-08-22",
-          period: "3",
-          className: "8",
-          section: "A",
-          subject: "Mathematics",
-          originalTeacher: "Amit Singh",
-        },
-        {
-          date: "2026-08-24",
-          period: "5",
-          className: "9",
-          section: "B",
-          subject: "Mathematics",
-          originalTeacher: "Vikas Sharma",
-        },
-      ],
-    },
-
-    {
-      id: 2,
-      name: "Priya Sharma",
-      father: "Ramesh Sharma",
-      mother: "Kavita Sharma",
-      dob: "1991-08-21",
-      gender: "Female",
-      bloodGroup: "O+",
-
-      employeeId: "MPSA-T002",
-      subject: "Science",
-      department: "Science",
-      designation: "TGT",
-      qualification: "M.Sc Physics",
-      experience: "6 Years",
-      previousSchool: "DAV School",
-      mobile: "9765432109",
-      alternateMobile: "",
-      email: "priya@mpsa.edu.in",
-      address: "Ghaziabad, Uttar Pradesh",
-
-      joiningDate: "2023-07-15",
-      resigningDate: "",
-      employmentType: "Permanent",
-      status: "Active",
-
-      isClassTeacher: true,
-      classTeacherClass: "7",
-      classTeacherSection: "B",
-
-      teachingClasses: "6,7,8",
-      teacherSubjects: "Science, Physics",
-
-      aadhaar: "",
-      pan: "",
-
-      attendance: {
-        workingDays: 220,
-        present: 211,
-        absent: 5,
-        leave: 4,
-      },
-
-      classAttendance: {
-        className: "7",
-        section: "B",
-        totalStudents: 40,
-        present: 37,
-        absent: 3,
-      },
-
-      fees: {
-        totalFees: 450000,
-        discount: 15000,
-        collected: 390000,
-      },
-
-      timetable: [
-        {
-          day: "Monday",
-          period: "1",
-          time: "8:00 - 8:40",
-          className: "7",
-          section: "B",
-          subject: "Science",
-          status: "Assigned",
-        },
-        {
-          day: "Monday",
-          period: "2",
-          time: "8:40 - 9:20",
-          className: "6",
-          section: "A",
-          subject: "Science",
-          status: "Assigned",
-        },
-        {
-          day: "Monday",
-          period: "3",
-          time: "9:20 - 10:00",
-          className: "",
-          section: "",
-          subject: "",
-          status: "Free",
-        },
-      ],
-
-      urgentDuties: [],
-    },
-
-    {
-      id: 3,
-      name: "Amit Singh",
-      father: "Rajendra Singh",
-      mother: "Meena Singh",
-      dob: "1987-11-02",
-      gender: "Male",
-      bloodGroup: "A+",
-
-      employeeId: "MPSA-T003",
-      subject: "English",
-      department: "English",
-      designation: "TGT",
-      qualification: "M.A English",
-      experience: "9 Years",
-      previousSchool: "St. Mary's School",
-      mobile: "9654321078",
-      alternateMobile: "",
-      email: "amit@mpsa.edu.in",
-      address: "Noida, Uttar Pradesh",
-
-      joiningDate: "2021-06-20",
-      resigningDate: "",
-      employmentType: "Permanent",
-      status: "Active",
-
-      isClassTeacher: false,
-      classTeacherClass: "",
-      classTeacherSection: "",
-
-      teachingClasses: "8,9,10",
-      teacherSubjects: "English",
-
-      aadhaar: "",
-      pan: "",
-
-      attendance: {
-        workingDays: 220,
-        present: 198,
-        absent: 12,
-        leave: 10,
-      },
-
-      classAttendance: {
-        className: "",
-        section: "",
-        totalStudents: 0,
-        present: 0,
-        absent: 0,
-      },
-
-      fees: {
-        totalFees: 0,
-        discount: 0,
-        collected: 0,
-      },
-
-      timetable: [
-        {
-          day: "Monday",
-          period: "1",
-          time: "8:00 - 8:40",
-          className: "9",
-          section: "A",
-          subject: "English",
-          status: "Assigned",
-        },
-        {
-          day: "Monday",
-          period: "2",
-          time: "8:40 - 9:20",
-          className: "",
-          section: "",
-          subject: "",
-          status: "Free",
-        },
-      ],
-
-      urgentDuties: [],
-    },
-  ]);
+  useEffect(() => {
+    loadTeachers();
+  }, []);
 
   // =====================================================
   // STATES
@@ -462,7 +180,7 @@ function Teachers() {
   // SUBMIT
   // =====================================================
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
@@ -475,81 +193,72 @@ function Teachers() {
       return;
     }
 
-    if (editingId !== null) {
-      setTeachers((previous) =>
-        previous.map((teacher) =>
-          teacher.id === editingId
-            ? {
-                ...teacher,
-                ...form,
-              }
-            : teacher
-        )
-      );
+    try {
+      if (editingId !== null) {
+        const response = await fetchWithAuth(`/teachers/${editingId}`, {
+          method: "PUT",
+          body: JSON.stringify(form),
+        });
 
-      alert("Teacher updated successfully!");
-    } else {
-      const newTeacher = {
-        id: Date.now(),
-        ...form,
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update teacher");
+        }
 
-        attendance: {
-          workingDays: 0,
-          present: 0,
-          absent: 0,
-          leave: 0,
-        },
+        alert("Teacher updated successfully!");
+      } else {
+        const response = await fetchWithAuth("/teachers", {
+          method: "POST",
+          body: JSON.stringify(form),
+        });
 
-        classAttendance: {
-          className: form.classTeacherClass,
-          section: form.classTeacherSection,
-          totalStudents: 0,
-          present: 0,
-          absent: 0,
-        },
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to add teacher");
+        }
 
-        fees: {
-          totalFees: 0,
-          discount: 0,
-          collected: 0,
-        },
+        alert("Teacher added successfully!");
+      }
 
-        timetable: [],
-
-        urgentDuties: [],
-      };
-
-      setTeachers((previous) => [
-        ...previous,
-        newTeacher,
-      ]);
-
-      alert("Teacher added successfully!");
+      await loadTeachers();
+      closeForm();
+    } catch (error) {
+      console.error("Teacher submit error:", error);
+      alert(error.message || "Operation failed.");
     }
-
-    closeForm();
   };
 
   // =====================================================
   // DELETE
   // =====================================================
 
-  const deleteTeacher = (id) => {
+  const deleteTeacher = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this teacher?"
     );
 
     if (!confirmDelete) return;
 
-    setTeachers((previous) =>
-      previous.filter((teacher) => teacher.id !== id)
-    );
+    try {
+      const response = await fetchWithAuth(`/teachers/${id}`, {
+        method: "DELETE",
+      });
 
-    if (viewTeacher?.id === id) {
-      setViewTeacher(null);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete teacher");
+      }
+
+      alert("Teacher deleted successfully!");
+      await loadTeachers();
+
+      if (viewTeacher?.id === id) {
+        setViewTeacher(null);
+      }
+    } catch (error) {
+      console.error("Teacher delete error:", error);
+      alert(error.message || "Delete operation failed.");
     }
-
-    alert("Teacher deleted successfully!");
   };
 
   // =====================================================

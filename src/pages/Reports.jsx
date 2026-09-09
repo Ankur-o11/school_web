@@ -1,225 +1,81 @@
-import "../Style/Reports.css";
+import { useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import "../Style/ui.css";
 
-function Reports() {
+const REPORT_MODULES = [
+  { id: "REP-01", name: "Student Enrolment & Demographic Report", category: "Students", format: "PDF / CSV", generatedOn: "2026-09-08" },
+  { id: "REP-02", name: "Monthly Attendance Summary (Class 10-A)", category: "Attendance", format: "PDF / Excel", generatedOn: "2026-09-01" },
+  { id: "REP-03", name: "Fee Collection & Pending Defaulters List", category: "Fees", format: "PDF / CSV", generatedOn: "2026-09-05" },
+  { id: "REP-04", name: "Mid-Term Academic Performance Matrix", category: "Results", format: "Excel / PDF", generatedOn: "2026-08-30" },
+  { id: "REP-05", name: "Teacher Monthly Payroll & Disbursement Log", category: "Payroll", format: "PDF", generatedOn: "2026-09-01" },
+  { id: "REP-06", name: "Transport Route Capacity & Student Allocations", category: "Transport", format: "CSV", generatedOn: "2026-08-25" }
+];
+
+export function Reports() {
+  const [reportsList] = useState(REPORT_MODULES);
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+
+  const filteredReports = selectedCategory === "ALL" 
+    ? reportsList 
+    : reportsList.filter(r => r.category === selectedCategory);
+
+  const columns = [
+    { header: "Report Title", accessor: "name", render: (row) => <strong>{row.name}</strong> },
+    { header: "Category", accessor: "category", render: (row) => <span className="ui-badge ui-badge-purple">{row.category}</span> },
+    { header: "Export Formats", accessor: "format" },
+    { header: "Last Generated", accessor: "generatedOn" },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button className="ui-btn ui-btn-secondary ui-btn-sm" onClick={() => window.print()}>
+            🖨️ Print
+          </button>
+          <button className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => alert(`Exporting ${row.name} as CSV`)}>
+            📥 Export CSV
+          </button>
+        </div>
+      )
+    }
+  ];
+
   return (
-    <div className="reports-page">
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Analytics"
+        title="Reports & Analytics Center"
+        description="Generate, view, and export comprehensive school administrative reports."
+        icon="📊"
+      />
 
-      {/* HEADER */}
+      <StatGrid>
+        <StatCard title="Available Report Types" value="24 Reports" icon="📊" />
+        <StatCard title="Student Analytics" value="6 Reports" icon="👨‍🎓" />
+        <StatCard title="Financial & Fee Reports" value="5 Reports" icon="💰" />
+        <StatCard title="Attendance & Payroll" value="7 Reports" icon="📅" />
+      </StatGrid>
 
-      <div className="reports-header">
-
-        <div>
-          <h1>📊 Reports</h1>
-
-          <p>
-            View and manage school reports and performance data.
-          </p>
-        </div>
-
-        <button className="reports-export-btn">
-          ⬇ Export Report
-        </button>
-
+      {/* Category filter tabs */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
+        {["ALL", "Students", "Attendance", "Fees", "Results", "Payroll", "Transport"].map((cat) => (
+          <button
+            key={cat}
+            className={`ui-btn ${selectedCategory === cat ? "ui-btn-primary" : "ui-btn-secondary"} ui-btn-sm`}
+            onClick={() => setSelectedCategory(cat)}
+          >
+            {cat === "ALL" ? "All Categories" : cat}
+          </button>
+        ))}
       </div>
 
-
-      {/* STATISTICS */}
-
-      <div className="reports-stats">
-
-        <div className="report-stat-card">
-          <div className="report-stat-icon">
-            👨‍🎓
-          </div>
-
-          <div>
-            <span>Total Students</span>
-            <strong>1,250</strong>
-          </div>
-        </div>
-
-
-        <div className="report-stat-card">
-          <div className="report-stat-icon">
-            👨‍🏫
-          </div>
-
-          <div>
-            <span>Total Teachers</span>
-            <strong>68</strong>
-          </div>
-        </div>
-
-
-        <div className="report-stat-card">
-          <div className="report-stat-icon">
-            📈
-          </div>
-
-          <div>
-            <span>Average Result</span>
-            <strong>82%</strong>
-          </div>
-        </div>
-
-
-        <div className="report-stat-card">
-          <div className="report-stat-icon">
-            💰
-          </div>
-
-          <div>
-            <span>Fee Collection</span>
-            <strong>₹18.5L</strong>
-          </div>
-        </div>
-
-      </div>
-
-
-      {/* REPORT CARDS */}
-
-      <div className="reports-grid">
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            👨‍🎓
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Student Report</h2>
-
-            <p>
-              View student admission, attendance and academic information.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            👨‍🏫
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Teacher Report</h2>
-
-            <p>
-              View teacher details, attendance and salary information.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            📅
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Attendance Report</h2>
-
-            <p>
-              Check student and teacher attendance reports.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            💰
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Fee Report</h2>
-
-            <p>
-              View collected fees, pending fees and payment history.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            📝
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Result Report</h2>
-
-            <p>
-              Analyze examination results and student performance.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <div className="report-card">
-
-          <div className="report-card-icon">
-            🗓️
-          </div>
-
-          <div className="report-card-content">
-
-            <h2>Timetable Report</h2>
-
-            <p>
-              View class-wise and teacher-wise timetable information.
-            </p>
-
-            <button>
-              View Report →
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
+      <DataTable
+        columns={columns}
+        data={filteredReports}
+        searchPlaceholder="Search available report modules..."
+      />
     </div>
   );
 }

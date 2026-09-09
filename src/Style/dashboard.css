@@ -1,819 +1,423 @@
-/* =========================================
-   DASHBOARD
-========================================= */
+/* =====================================================
+   MAHARANA PRATAP SCIENCE ACADEMY (MPSA)
+   COMMERCIAL SCHOOL ERP DASHBOARD STYLES
+===================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
 .dashboard-page {
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-  padding-bottom: 30px;
+  /* MPSA School Branding Palette */
+  --mpsa-navy: #1b365d;
+  --mpsa-navy-dark: #0f2340;
+  --mpsa-navy-light: #2c4d7c;
+  
+  --mpsa-gold: #c59b27;
+  --mpsa-gold-light: #fef9c3;
+  --mpsa-gold-dark: #92400e;
+
+  --mpsa-ink-900: #0f172a;
+  --mpsa-ink-700: #334155;
+  --mpsa-ink-500: #64748b;
+  --mpsa-ink-300: #cbd5e1;
+
+  --mpsa-paper: #f8fafc;
+  --mpsa-white: #ffffff;
+  --mpsa-border: #e2e8f0;
+
+  --mpsa-green: #16a34a;
+  --mpsa-green-bg: #f0fdf4;
+  --mpsa-red: #dc2626;
+  --mpsa-red-bg: #fef2f2;
+  --mpsa-amber: #d97706;
+  --mpsa-amber-bg: #fffbeb;
+  --mpsa-blue: #2563eb;
+  --mpsa-blue-bg: #eff6ff;
+  --mpsa-purple: #7c3aed;
+  --mpsa-purple-bg: #f5f3ff;
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --shadow-card: 0 2px 10px rgba(15, 35, 65, 0.05), 0 1px 3px rgba(15, 35, 65, 0.03);
+  --shadow-hover: 0 10px 24px -4px rgba(15, 35, 65, 0.12), 0 4px 8px -2px rgba(15, 35, 65, 0.04);
+
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--mpsa-ink-900);
+  background: var(--mpsa-paper);
+  min-height: 100vh;
+  padding: 30px clamp(18px, 3.5vw, 40px) 60px;
+  box-sizing: border-box;
+  animation: mpsa-fade-in 0.3s ease-out;
 }
 
+.dashboard-page * {
+  box-sizing: border-box;
+}
 
-/* =========================================
-   HEADER
-========================================= */
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3 {
+  margin: 0;
+  color: var(--mpsa-navy);
+  letter-spacing: -0.02em;
+}
+
+@keyframes mpsa-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =====================================================
+   1. TOP HEADER (MPSA BRANDING)
+===================================================== */
 
 .dashboard-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
   margin-bottom: 28px;
+  background: var(--mpsa-white);
+  padding: 22px 26px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--mpsa-border);
+  box-shadow: var(--shadow-card);
 }
 
-.dashboard-label {
+.header-brand-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.mpsa-crest-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--mpsa-navy-dark) 0%, var(--mpsa-navy) 100%);
+  color: var(--mpsa-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-shadow: 0 6px 14px -3px rgba(15, 35, 65, 0.3);
+  border: 1px solid rgba(197, 155, 39, 0.3);
+}
+
+.mpsa-institution-tag {
   display: inline-block;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: #64748b;
-  margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mpsa-navy-light);
+  background: var(--mpsa-blue-bg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+  border: 1px solid #bfdbfe;
 }
 
 .dashboard-header h1 {
-  font-size: 30px;
+  font-size: 24px;
+  font-weight: 800;
   line-height: 1.2;
-  color: #172033;
-  margin: 0 0 7px;
-  font-weight: 750;
 }
 
 .dashboard-header p {
-  color: #718096;
-  font-size: 14px;
-  margin: 0;
+  margin: 3px 0 0;
+  color: var(--mpsa-ink-500);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.dashboard-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .dashboard-date {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #ffffff;
-  border: 1px solid #e7eaf0;
-  border-radius: 12px;
-  padding: 12px 18px;
-  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+  gap: 10px;
+  background: var(--mpsa-paper);
+  border: 1px solid var(--mpsa-border);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
 }
 
-.dashboard-date > span {
-  font-size: 22px;
-}
-
-.dashboard-date div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.date-icon {
+  font-size: 16px;
 }
 
 .dashboard-date small {
+  display: block;
+  color: var(--mpsa-ink-500);
   font-size: 11px;
-  color: #8a94a6;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
 }
 
 .dashboard-date strong {
-  font-size: 13px;
-  color: #273449;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--mpsa-navy);
 }
 
+.icon-btn {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--mpsa-border);
+  background: var(--mpsa-paper);
+  color: var(--mpsa-navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: none;
+}
 
-/* =========================================
-   STATISTICS
-========================================= */
+.icon-btn:hover {
+  background: var(--mpsa-navy);
+  border-color: var(--mpsa-navy);
+  color: var(--mpsa-white);
+  transform: translateY(-2px);
+}
+
+.icon-btn-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mpsa-red);
+  border: 2px solid var(--mpsa-white);
+}
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--mpsa-paper);
+  border: 1px solid var(--mpsa-border);
+  border-radius: var(--radius-md);
+  padding: 6px 14px 6px 6px;
+}
+
+.profile-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: var(--mpsa-navy);
+  color: var(--mpsa-gold);
+  font-weight: 800;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.profile-meta strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mpsa-ink-900);
+}
+
+.profile-meta small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mpsa-ink-500);
+}
+
+/* =====================================================
+   2. SCHOOL OVERVIEW STATISTICS
+===================================================== */
 
 .dashboard-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 18px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .dashboard-card {
-  background: #ffffff;
-  border: 1px solid #e8ebf0;
-  border-radius: 16px;
-  padding: 21px;
+  background: var(--mpsa-white);
+  border: 1px solid var(--mpsa-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  min-height: 125px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-  transition: 0.25s ease;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.dashboard-card.accent-blue::before { background: var(--mpsa-blue); }
+.dashboard-card.accent-purple::before { background: var(--mpsa-purple); }
+.dashboard-card.accent-green::before { background: var(--mpsa-green); }
+.dashboard-card.accent-gold::before { background: var(--mpsa-gold); }
 
 .dashboard-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--shadow-hover);
+  border-color: #cbd5e1;
 }
 
 .dashboard-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 23px;
-  flex-shrink: 0;
+  flex: none;
 }
 
-.dashboard-icon.blue {
-  background: #eaf2ff;
-}
-
-.dashboard-icon.purple {
-  background: #f1eaff;
-}
-
-.dashboard-icon.green {
-  background: #e9f9ef;
-}
-
-.dashboard-icon.orange {
-  background: #fff3df;
-}
+.dashboard-icon.blue { background: var(--mpsa-blue-bg); color: var(--mpsa-blue); }
+.dashboard-icon.purple { background: var(--mpsa-purple-bg); color: var(--mpsa-purple); }
+.dashboard-icon.green { background: var(--mpsa-green-bg); color: var(--mpsa-green); }
+.dashboard-icon.orange { background: var(--mpsa-amber-bg); color: var(--mpsa-amber); }
 
 .stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
+  flex: 1;
 }
 
 .stat-content > span {
-  display: block;
-  color: #7b8494;
   font-size: 13px;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: var(--mpsa-ink-500);
 }
 
 .stat-content h2 {
-  margin: 0 0 5px;
-  color: #172033;
-  font-size: 25px;
-  font-weight: 750;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--mpsa-navy);
 }
 
-.stat-content small {
-  font-size: 11px;
+.stat-content .positive {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mpsa-green);
+  margin-top: 4px;
 }
 
-.positive {
-  color: #16a05d;
-}
-
-
-/* =========================================
-   GRID
-========================================= */
+/* =====================================================
+   PANEL GRID (ATTENDANCE + FEES)
+===================================================== */
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.1fr 0.9fr;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-
-/* =========================================
-   PANELS
-========================================= */
-
 .dashboard-panel {
-  background: #ffffff;
-  border: 1px solid #e8ebf0;
-  border-radius: 16px;
-  padding: 22px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  background: var(--mpsa-white);
+  border: 1px solid var(--mpsa-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
 }
 
 .panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .panel-header h2 {
-  margin: 0 0 5px;
-  color: #172033;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
+  color: var(--mpsa-navy);
 }
 
 .panel-header p {
-  margin: 0;
-  color: #8a94a6;
-  font-size: 12px;
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--mpsa-ink-500);
 }
 
 .panel-btn {
-  border: none;
-  background: #f1f5ff;
-  color: #3563d9;
-  padding: 8px 13px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mpsa-border);
+  background: var(--mpsa-paper);
+  color: var(--mpsa-navy);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: 0.2s;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
 .panel-btn:hover {
-  background: #e4ecff;
+  background: var(--mpsa-navy);
+  border-color: var(--mpsa-navy);
+  color: var(--mpsa-white);
 }
 
-
-/* =========================================
-   ATTENDANCE
-========================================= */
-
-.attendance-box {
-  min-height: 210px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 55px;
-}
-
-.attendance-circle {
-  width: 155px;
-  height: 155px;
-  border-radius: 50%;
-  background:
-    conic-gradient(
-      #3b82f6 0deg 331deg,
-      #e9edf4 331deg 360deg
-    );
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.attendance-circle::before {
-  content: "";
-  position: absolute;
-  width: 117px;
-  height: 117px;
-  border-radius: 50%;
-  background: white;
-}
-
-.attendance-circle strong,
-.attendance-circle span {
-  position: relative;
-  z-index: 2;
-}
-
-.attendance-circle strong {
-  font-size: 29px;
-  color: #172033;
-}
-
-.attendance-circle span {
-  font-size: 11px;
-  color: #8791a2;
-  margin-top: 2px;
-}
-
-.attendance-details {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.attendance-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.attendance-item > div {
-  min-width: 65px;
-}
-
-.attendance-item p {
-  margin: 0 0 2px;
-  font-size: 11px;
-  color: #8791a2;
-}
-
-.attendance-item strong {
-  font-size: 16px;
-  color: #172033;
-}
-
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
-
-.dot.present {
-  background: #3b82f6;
-}
-
-.dot.absent {
-  background: #ef4444;
-}
-
-.dot.leave {
-  background: #f59e0b;
-}
-
-
-/* =========================================
-   FEES PIE CHART
-========================================= */
-
-.fee-chart-section {
-  min-height: 190px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 42px;
-}
-
-
-/* Pie */
-
-.fee-pie-chart {
-  width: 165px;
-  height: 165px;
-  border-radius: 50%;
-  background:
-    conic-gradient(
-      #22c55e 0deg 148deg,
-      #f1f3f6 148deg 360deg
-    );
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.fee-pie-chart::before {
-  content: "";
-  position: absolute;
-  width: 116px;
-  height: 116px;
-  background: #ffffff;
-  border-radius: 50%;
-}
-
-.fee-pie-inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.fee-pie-inner strong {
-  font-size: 25px;
-  color: #172033;
-}
-
-.fee-pie-inner span {
-  font-size: 10px;
-  color: #8992a3;
-  margin-top: 2px;
-}
-
-
-/* Fee details */
-
-.fee-chart-details {
-  flex: 1;
-  min-width: 180px;
-}
-
-.fee-chart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #eef0f4;
-}
-
-.fee-chart-item > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fee-chart-item span {
-  font-size: 12px;
-  color: #697386;
-}
-
-.fee-chart-item strong {
-  font-size: 13px;
-  color: #172033;
-}
-
-.fee-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.fee-dot.collected {
-  background: #22c55e;
-}
-
-.fee-dot.pending {
-  background: #e5e7eb;
-}
-
-.fee-chart-total {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 12px;
-}
-
-.fee-chart-total span {
-  font-size: 11px;
-  color: #8992a3;
-}
-
-.fee-chart-total strong {
-  font-size: 14px;
-  color: #172033;
-}
-
-
-/* Progress */
-
-.fee-progress {
-  height: 7px;
-  width: 100%;
-  background: #eef1f5;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-top: 8px;
-}
-
-.fee-progress-bar {
-  height: 100%;
-  background: #22c55e;
-  border-radius: 20px;
-}
-
-.fee-percent {
-  margin: 7px 0 0;
-  text-align: right;
-  font-size: 10px;
-  color: #8a94a6;
-}
-
-
-/* =========================================
-   RECENT STUDENTS
-========================================= */
-
-.recent-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 0;
-  border-bottom: 1px solid #eef0f4;
-}
-
-.recent-item:last-child {
-  border-bottom: none;
-}
-
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
-  background: #eef4ff;
-  color: #3563d9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.student-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.student-info strong {
-  font-size: 13px;
-  color: #273449;
-}
-
-.student-info span {
-  font-size: 11px;
-  color: #8a94a6;
-}
-
-.recent-item > small {
-  color: #9aa3b2;
-  font-size: 10px;
-}
-
-
-/* =========================================
-   QUICK ACTIONS
-========================================= */
-
-.quick-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.quick-actions button {
-  border: 1px solid #e9ecf1;
-  background: #fafbfc;
-  border-radius: 12px;
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  text-align: left;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.quick-actions button:hover {
-  background: #f5f8ff;
-  border-color: #d9e3fb;
-  transform: translateY(-2px);
-}
-
-.quick-actions button > span {
-  width: 38px;
-  height: 38px;
-  background: #eef4ff;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  flex-shrink: 0;
-}
-
-.quick-actions button div {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.quick-actions button strong {
-  color: #273449;
-  font-size: 12px;
-}
-
-.quick-actions button small {
-  color: #8a94a6;
-  font-size: 9px;
-}
-
-
-/* =========================================
-   RESPONSIVE
-========================================= */
-
-@media (max-width: 1200px) {
-
-  .dashboard-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-@media (max-width: 700px) {
-
-  .dashboard-page {
-    padding: 5px;
-  }
-
-  .dashboard-header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .dashboard-header h1 {
-    font-size: 24px;
-  }
-
-  .dashboard-date {
-    width: 100%;
-  }
-
-  .dashboard-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-card {
-    min-height: 105px;
-  }
-
-  .attendance-box {
-    flex-direction: column;
-    gap: 25px;
-    padding-bottom: 15px;
-  }
-
-  .attendance-details {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .fee-chart-section {
-    flex-direction: column;
-    gap: 25px;
-  }
-
-  .fee-chart-details {
-    width: 100%;
-  }
-
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-/* =========================
-   FEE PIE CHART
-========================= */
-
-.fee-chart-section {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  margin-top: 10px;
-}
-
-.fee-pie-wrapper {
-  width: 220px;
-  height: 220px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.fee-pie-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-}
-
-.fee-pie-center strong {
-  display: block;
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.fee-pie-center span {
-  font-size: 12px;
-  color: #777;
-}
-
-.fee-chart-details {
-  flex: 1;
-}
-
-.fee-chart-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.fee-chart-item > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.fee-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.fee-dot.collected {
-  background: #22c55e;
-}
-
-.fee-dot.pending {
-  background: #e5e7eb;
-}
-
-.fee-chart-total {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 15px;
-  font-size: 14px;
-}
-
-.fee-chart-total strong {
-  font-size: 16px;
-}
-
-/* FEE PROGRESS */
-
-.fee-progress {
-  width: 100%;
-  height: 8px;
-  background: #eef0f3;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 15px;
-}
-
-.fee-progress-bar {
-  height: 100%;
-  background: #22c55e;
-  border-radius: 10px;
-}
-
-.fee-percent {
-  font-size: 12px;
-  color: #777;
-  margin-top: 8px;
-}
-
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 900px) {
-
-  .fee-chart-section {
-    flex-direction: column;
-  }
-
-  .fee-pie-wrapper {
-    width: 220px;
-  }
-
-}
-
-@media (max-width: 600px) {
-
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-}
-
-
-/* =========================
-   ATTENDANCE CHART
-========================= */
+/* =====================================================
+   3. ATTENDANCE ANALYTICS
+===================================================== */
 
 .attendance-box {
   display: flex;
   align-items: center;
-  gap: 25px;
-  margin-top: 10px;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: auto;
 }
 
 .attendance-chart-wrapper {
-  width: 220px;
-  height: 220px;
   position: relative;
-  flex-shrink: 0;
+  flex: 1 1 200px;
+  min-width: 180px;
 }
 
 .attendance-chart-center {
@@ -821,79 +425,394 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   pointer-events: none;
 }
 
 .attendance-chart-center strong {
-  display: block;
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--mpsa-navy);
+  line-height: 1;
 }
 
 .attendance-chart-center span {
-  font-size: 12px;
-  color: #777;
+  font-size: 11.5px;
+  color: var(--mpsa-ink-500);
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 .attendance-details {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 160px;
 }
 
 .attendance-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.attendance-item:last-child {
-  border-bottom: none;
-}
-
-.attendance-item .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.dot.present {
-  background: #22c55e;
-}
-
-.dot.absent {
-  background: #ef4444;
-}
-
-.dot.leave {
-  background: #f59e0b;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--mpsa-paper);
+  border: 1px solid var(--mpsa-border);
 }
 
 .attendance-item p {
   margin: 0;
-  font-size: 13px;
-  color: #777;
+  font-size: 12.5px;
+  color: var(--mpsa-ink-500);
+  font-weight: 600;
 }
 
 .attendance-item strong {
-  font-size: 17px;
+  font-size: 14.5px;
+  color: var(--mpsa-navy);
+  font-weight: 800;
 }
 
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
 
-/* =========================
-   MOBILE
-========================= */
+.dot.present { background: var(--mpsa-green); }
+.dot.absent { background: var(--mpsa-red); }
+.dot.leave { background: var(--mpsa-amber); }
 
-@media (max-width: 600px) {
+/* =====================================================
+   4. FEE MANAGEMENT OVERVIEW
+===================================================== */
 
-  .attendance-box {
+.fee-chart-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.fee-pie-wrapper {
+  position: relative;
+  flex: 1 1 200px;
+  min-width: 180px;
+}
+
+.fee-pie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.fee-pie-center strong {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--mpsa-navy);
+  line-height: 1;
+}
+
+.fee-pie-center span {
+  font-size: 11.5px;
+  color: var(--mpsa-ink-500);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.fee-chart-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 180px;
+}
+
+.fee-chart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--mpsa-paper);
+  border: 1px solid var(--mpsa-border);
+}
+
+.fee-chart-item > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fee-chart-item span:not(.fee-dot) {
+  font-size: 13px;
+  color: var(--mpsa-ink-500);
+  font-weight: 600;
+}
+
+.fee-chart-item strong {
+  font-size: 14.5px;
+  color: var(--mpsa-navy);
+  font-weight: 800;
+}
+
+.fee-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.fee-dot.collected { background: var(--mpsa-green); }
+.fee-dot.pending { background: var(--mpsa-ink-300); }
+
+.fee-chart-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 2px;
+  margin-top: 2px;
+  border-top: 1px stroke var(--mpsa-border);
+}
+
+.fee-chart-total span {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mpsa-navy);
+}
+
+.fee-chart-total strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--mpsa-navy);
+}
+
+.fee-progress {
+  margin-top: 20px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--mpsa-border);
+  overflow: hidden;
+}
+
+.fee-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mpsa-green), #34d399);
+  transition: width 0.4s ease;
+}
+
+.fee-percent {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--mpsa-ink-500);
+  font-weight: 600;
+}
+
+/* =====================================================
+   5. RECENTLY ADDED STUDENTS
+===================================================== */
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--mpsa-paper);
+  border: 1px solid var(--mpsa-border);
+  transition: all 0.15s ease;
+}
+
+.recent-item:hover {
+  background: var(--mpsa-white);
+  box-shadow: var(--shadow-card);
+  transform: translateX(3px);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--mpsa-navy);
+  color: var(--mpsa-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex: none;
+}
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.student-info strong {
+  font-size: 14px;
+  color: var(--mpsa-navy);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-info span {
+  font-size: 12.5px;
+  color: var(--mpsa-ink-500);
+  margin-top: 2px;
+}
+
+.status-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--mpsa-green);
+  background: var(--mpsa-green-bg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+  flex: none;
+}
+
+/* =====================================================
+   6. QUICK ACTIONS
+===================================================== */
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.quick-actions button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--mpsa-border);
+  background: var(--mpsa-paper);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.quick-actions button:hover {
+  border-color: var(--mpsa-navy);
+  background: var(--mpsa-white);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.quick-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.quick-icon.blue { background: var(--mpsa-blue-bg); color: var(--mpsa-blue); }
+.quick-icon.green { background: var(--mpsa-green-bg); color: var(--mpsa-green); }
+.quick-icon.orange { background: var(--mpsa-amber-bg); color: var(--mpsa-amber); }
+.quick-icon.purple { background: var(--mpsa-purple-bg); color: var(--mpsa-purple); }
+
+.quick-actions button div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.quick-actions button strong {
+  font-size: 14px;
+  color: var(--mpsa-navy);
+  font-weight: 700;
+}
+
+.quick-actions button small {
+  font-size: 12px;
+  color: var(--mpsa-ink-500);
+  margin-top: 2px;
+}
+
+/* =====================================================
+   8. RESPONSIVE DESIGN
+===================================================== */
+
+@media (max-width: 1100px) {
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-page {
+    padding: 18px 14px 40px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-meta {
+    display: none;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-box,
+  .fee-chart-section {
     flex-direction: column;
   }
+}
 
-  .attendance-details {
-    width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-page {
+    animation: none;
   }
 
+  .dashboard-card,
+  .quick-actions button,
+  .panel-btn,
+  .icon-btn,
+  .fee-progress-bar {
+    transition: none;
+  }
 }

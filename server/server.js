@@ -1,7 +1,9 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import dns from "dns";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import {
   connectDatabase,
@@ -12,6 +14,16 @@ import {
   setStudentsDatabase,
 } from "./modules/students/students.controller.js";
 
+import { seedInitialAdmin } from "./modules/auth/auth.controller.js";
+
+import authRoutes from "./modules/auth/auth.routes.js";
+import usersRoutes from "./modules/users/users.routes.js";
+import rolesPermissionsRoutes from "./modules/rolesPermissions/rolesPermissions.routes.js";
+import teachersRoutes from "./modules/teachers/teachers.routes.js";
+import teacherAttendanceRoutes from "./modules/teacherAttendance/teacherAttendance.routes.js";
+import teacherSalaryRoutes from "./modules/teacherSalary/teacherSalary.routes.js";
+import activityLogRoutes from "./modules/activityLog/activityLog.routes.js";
+
 import studentsRoutes from "./modules/students/students.routes.js";
 import subjectsRoutes from "./modules/subjects/subjects.routes.js";
 import resultsRoutes from "./modules/results/results.routes.js";
@@ -19,9 +31,10 @@ import classesRoutes from "./modules/classes/classes.routes.js";
 import feesRoutes from "./modules/fees/fees.routes.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 
-dotenv.config({
-  path: "./server.env",
-});
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "./server.env") });
+dotenv.config({ path: "./server.env" });
+dotenv.config({ path: "./server/server.env" });
 
 dns.setServers([
   "8.8.8.8",
@@ -51,9 +64,20 @@ app.use(
   })
 );
 
+import communicationsRoutes from "./modules/communications/communications.routes.js";
+
 // =====================================================
 // ACTIVE MODULES
 // =====================================================
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/roles-permissions", rolesPermissionsRoutes);
+app.use("/api/teachers", teachersRoutes);
+app.use("/api/teacher-attendance", teacherAttendanceRoutes);
+app.use("/api/teacher-salary", teacherSalaryRoutes);
+app.use("/api/activity-log", activityLogRoutes);
+app.use("/api/communications", communicationsRoutes);
 
 app.use("/api/students", studentsRoutes);
 app.use("/api/subjects", subjectsRoutes);
@@ -61,7 +85,6 @@ app.use("/api/results", resultsRoutes);
 app.use("/api/classes", classesRoutes);
 app.use("/api/fees", feesRoutes);
 app.use("/api/student-attendance", attendanceRoutes);
-
 
 // =====================================================
 // HEALTH
@@ -113,6 +136,9 @@ async function startServer() {
 
     // Make database available to modules that use req.app.locals.db.
     app.locals.db = db;
+
+    // Seed default admin safely if none exists
+    await seedInitialAdmin(db);
 
     console.log("✅ Module databases initialized");
 

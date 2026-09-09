@@ -1,4 +1,4 @@
-﻿// =====================================================
+// =====================================================
 // MPSA SCHOOL MANAGEMENT SYSTEM
 // DATABASE CONFIGURATION
 // MongoDB Atlas
@@ -6,10 +6,16 @@
 
 import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
+import dns from "dns";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config({
-  path: "./server.env",
-});
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../server.env") });
+dotenv.config({ path: "./server.env" });
+dotenv.config({ path: "./server/server.env" });
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -42,8 +48,19 @@ export async function connectDatabase() {
 
   db = client.db("mpsa_school");
 
-  console.log("âœ… MongoDB connected successfully");
+  console.log("✅ MongoDB connected successfully");
   console.log("Database:", db.databaseName);
+
+  // Initialize Indexes safely
+  try {
+    await db.collection("students").createIndex({ admissionNo: 1 }, { unique: true, sparse: true });
+    await db.collection("students").createIndex({ class: 1, section: 1 });
+    await db.collection("teachers").createIndex({ employeeId: 1 }, { unique: true, sparse: true });
+    await db.collection("classes").createIndex({ className: 1, section: 1 }, { unique: true });
+    await db.collection("subjects").createIndex({ code: 1, class: 1, section: 1 });
+  } catch (idxErr) {
+    console.warn("Index initialization notice:", idxErr.message);
+  }
 
   return db;
 }

@@ -1,11 +1,4 @@
-
-// =====================================================
-// MPSA SCHOOL
-// ATTENDANCE ROUTES
-// =====================================================
-
 import express from "express";
-
 import {
   getAttendanceStudents,
   getDateAttendance,
@@ -19,95 +12,22 @@ import {
   getHolidaysController,
   deleteHolidayController,
 } from "./attendance.controller.js";
+import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// =====================================================
-// STUDENTS FOR ATTENDANCE
-// =====================================================
+router.use(authenticate);
 
-router.get(
-  "/students",
-  getAttendanceStudents
-);
-
-// =====================================================
-// DAILY ATTENDANCE
-// =====================================================
-
-router.get(
-  "/date/:date",
-  getDateAttendance
-);
-
-// =====================================================
-// MONTHLY ATTENDANCE
-// =====================================================
-
-router.get(
-  "/month/:month",
-  getMonthAttendance
-);
-
-// =====================================================
-// SAVE ATTENDANCE
-// =====================================================
-
-router.post(
-  "/",
-  saveStudentAttendance
-);
-
-// =====================================================
-// STUDENT REPORT
-// =====================================================
-
-router.get(
-  "/student/:studentId",
-  getStudentAttendanceController
-);
-
-router.get(
-  "/student/:studentId/summary",
-  getStudentAttendanceSummaryController
-);
-
-// =====================================================
-// CLASS REPORT
-// =====================================================
-
-router.get(
-  "/class/:className",
-  getClassAttendanceController
-);
-
-// =====================================================
-// OVERALL SUMMARY
-// =====================================================
-
-router.get(
-  "/summary",
-  getAttendanceSummaryController
-);
-
-// =====================================================
-// HOLIDAYS
-// =====================================================
-
-router.post(
-  "/holiday",
-  createHolidayController
-);
-
-router.get(
-  "/holidays",
-  getHolidaysController
-);
-
-router.delete(
-  "/holiday/:id",
-  deleteHolidayController
-);
+router.get("/students", authorizePermission("attendance.view"), getAttendanceStudents);
+router.get("/date/:date", authorizePermission("attendance.view"), getDateAttendance);
+router.get("/month/:month", authorizePermission("attendance.view"), getMonthAttendance);
+router.post("/", authorizePermission("attendance.mark"), saveStudentAttendance);
+router.get("/student/:studentId", authorizePermission("attendance.view"), getStudentAttendanceController);
+router.get("/student/:studentId/summary", authorizePermission("attendance.view"), getStudentAttendanceSummaryController);
+router.get("/class/:className", authorizePermission("attendance.view"), getClassAttendanceController);
+router.get("/summary", authorizePermission("attendance.view"), getAttendanceSummaryController);
+router.post("/holiday", authorizePermission("settings.manage"), createHolidayController);
+router.get("/holidays", authorizePermission("attendance.view"), getHolidaysController);
+router.delete("/holiday/:id", authorizePermission("settings.manage"), deleteHolidayController);
 
 export default router;
-

@@ -1,405 +1,210 @@
 import { useState } from "react";
-import "../Style/Notices.css";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import ActionMenu from "../components/ui/ActionMenu";
+import Modal from "../components/ui/Modal";
+import "../Style/ui.css";
 
-function Notices() {
-  const [notices, setNotices] = useState([
-    {
-      id: 1,
-      title: "Annual Examination 2026",
-      category: "Examination",
-      date: "25 August 2026",
-      description:
-        "Annual examination schedule will be available from the school office.",
-      priority: "High",
-    },
-    {
-      id: 2,
-      title: "Independence Day Celebration",
-      category: "Event",
-      date: "15 August 2026",
-      description:
-        "Students are requested to participate in the Independence Day celebration.",
-      priority: "Medium",
-    },
-    {
-      id: 3,
-      title: "Parent Teacher Meeting",
-      category: "Meeting",
-      date: "30 August 2026",
-      description:
-        "Parent Teacher Meeting will be conducted in the school campus.",
-      priority: "Normal",
-    },
-  ]);
+const INITIAL_NOTICES = [
+  {
+    id: "NTC-001",
+    title: "Mid-Term Examination Schedule Announced",
+    content: "The official datesheet for Mid-Term Examinations has been published. All students are advised to check their respective class notice boards.",
+    audience: "All",
+    publishDate: "2026-09-01",
+    expiryDate: "2026-09-30",
+    status: "Published"
+  },
+  {
+    id: "NTC-002",
+    title: "Staff Meeting for Annual Sports Planning",
+    content: "All academic and sports staff members are requested to assemble in the conference room at 3:30 PM today.",
+    audience: "Teachers",
+    publishDate: "2026-09-08",
+    expiryDate: "2026-09-09",
+    status: "Published"
+  },
+  {
+    id: "NTC-003",
+    title: "Independence Day Holiday Announcement",
+    content: "The school will remain closed on 15th August on account of Independence Day celebrations.",
+    audience: "All",
+    publishDate: "2026-08-10",
+    expiryDate: "2026-08-16",
+    status: "Expired"
+  }
+];
 
-  const [showForm, setShowForm] = useState(false);
+export function Notices() {
+  const [notices, setNotices] = useState(INITIAL_NOTICES);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [previewNotice, setPreviewNotice] = useState(null);
 
   const [formData, setFormData] = useState({
     title: "",
-    category: "General",
-    date: "",
-    description: "",
-    priority: "Normal",
+    content: "",
+    audience: "All",
+    expiryDate: ""
   });
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const addNotice = (e) => {
+  const handleCreateNotice = (e) => {
     e.preventDefault();
-
-    if (!formData.title || !formData.date || !formData.description) {
-      alert("Please fill all required fields.");
-      return;
-    }
-
     const newNotice = {
-      id: Date.now(),
-      ...formData,
+      id: `NTC-${Math.floor(100 + Math.random() * 900)}`,
+      title: formData.title,
+      content: formData.content,
+      audience: formData.audience,
+      publishDate: new Date().toISOString().split("T")[0],
+      expiryDate: formData.expiryDate || "2026-10-01",
+      status: "Published"
     };
-
     setNotices([newNotice, ...notices]);
-
-    setFormData({
-      title: "",
-      category: "General",
-      date: "",
-      description: "",
-      priority: "Normal",
-    });
-
-    setShowForm(false);
+    setIsModalOpen(false);
+    setFormData({ title: "", content: "", audience: "All", expiryDate: "" });
   };
 
-  const deleteNotice = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this notice?"
-    );
-
-    if (confirmDelete) {
-      setNotices(notices.filter((notice) => notice.id !== id));
+  const columns = [
+    { header: "Notice Title", accessor: "title", render: (row) => <strong>{row.title}</strong> },
+    { header: "Audience", accessor: "audience", render: (row) => <span className="ui-badge ui-badge-purple">{row.audience}</span> },
+    { header: "Publish Date", accessor: "publishDate" },
+    { header: "Expiry Date", accessor: "expiryDate" },
+    { header: "Status", accessor: "status", render: (row) => <StatusBadge status={row.status} /> },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <ActionMenu
+          actions={[
+            { label: "View Notice", icon: "👁️", onClick: () => setPreviewNotice(row) },
+            { label: "Delete", icon: "🗑️", danger: true, onClick: () => setNotices(notices.filter((n) => n.id !== row.id)) }
+          ]}
+        />
+      )
     }
-  };
+  ];
 
   return (
-    <div className="notices-page">
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Communication"
+        title="School Notice Board"
+        description="Create, publish, and manage official notices for students, teachers, and parents."
+        icon="📢"
+        primaryAction={{
+          label: "Publish New Notice",
+          icon: "+",
+          onClick: () => setIsModalOpen(true)
+        }}
+      />
 
-      {/* HEADER */}
+      <StatGrid>
+        <StatCard title="Total Notices" value={notices.length} icon="📢" />
+        <StatCard title="Active Published" value={notices.filter((n) => n.status === "Published").length} icon="✅" />
+        <StatCard title="Targeted to Staff" value={notices.filter((n) => n.audience === "Teachers").length} icon="👨‍🏫" />
+        <StatCard title="Expired Notices" value={notices.filter((n) => n.status === "Expired").length} icon="⌛" />
+      </StatGrid>
 
-      <div className="notices-header">
+      <DataTable
+        columns={columns}
+        data={notices}
+        searchPlaceholder="Search notices by title or content..."
+        filters={[
+          { key: "audience", label: "Audience", options: [{ value: "All", label: "All" }, { value: "Teachers", label: "Teachers" }, { value: "Students", label: "Students" }] },
+          { key: "status", label: "Status", options: [{ value: "Published", label: "Published" }, { value: "Expired", label: "Expired" }] }
+        ]}
+      />
 
-        <div className="notices-title">
-
-          <div className="notices-icon">
-            📢
+      {/* Create Notice Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Publish Official Notice"
+        footer={
+          <>
+            <button className="ui-btn ui-btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <button className="ui-btn ui-btn-primary" onClick={handleCreateNotice}>Publish Notice</button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateNotice}>
+          <div className="ui-form-group">
+            <label>Notice Heading / Title *</label>
+            <input
+              type="text"
+              className="ui-form-control"
+              placeholder="e.g. Science Exhibition Registration"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
           </div>
 
-          <div>
-            <h1>Notices</h1>
-
-            <p>
-              Create and manage important school notices.
-            </p>
-          </div>
-
-        </div>
-
-
-        <button
-          className="add-notice-btn"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? "✕ Close" : "+ Add Notice"}
-        </button>
-
-      </div>
-
-
-      {/* STATISTICS */}
-
-      <div className="notice-stats">
-
-        <div className="notice-stat-card">
-          <div className="stat-icon blue">
-            📢
-          </div>
-
-          <div>
-            <span>Total Notices</span>
-            <strong>{notices.length}</strong>
-          </div>
-        </div>
-
-
-        <div className="notice-stat-card">
-          <div className="stat-icon orange">
-            ⚠️
-          </div>
-
-          <div>
-            <span>High Priority</span>
-
-            <strong>
-              {
-                notices.filter(
-                  (notice) => notice.priority === "High"
-                ).length
-              }
-            </strong>
-          </div>
-        </div>
-
-
-        <div className="notice-stat-card">
-          <div className="stat-icon green">
-            📅
-          </div>
-
-          <div>
-            <span>Upcoming</span>
-
-            <strong>
-              {
-                notices.filter(
-                  (notice) => notice.date
-                ).length
-              }
-            </strong>
-          </div>
-        </div>
-
-      </div>
-
-
-      {/* ADD NOTICE FORM */}
-
-      {showForm && (
-        <div className="notice-form-card">
-
-          <h2>
-            Create New Notice
-          </h2>
-
-          <form onSubmit={addNotice}>
-
-            <div className="form-grid">
-
-              <div className="form-group">
-                <label>
-                  Notice Title *
-                </label>
-
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Enter notice title"
-                  value={formData.title}
-                  onChange={handleChange}
-                />
-              </div>
-
-
-              <div className="form-group">
-                <label>
-                  Category
-                </label>
-
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                >
-                  <option>General</option>
-                  <option>Examination</option>
-                  <option>Event</option>
-                  <option>Meeting</option>
-                  <option>Holiday</option>
-                  <option>Important</option>
-                </select>
-              </div>
-
-
-              <div className="form-group">
-                <label>
-                  Date *
-                </label>
-
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                />
-              </div>
-
-
-              <div className="form-group">
-                <label>
-                  Priority
-                </label>
-
-                <select
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                >
-                  <option>Normal</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                </select>
-              </div>
-
+          <div className="ui-form-row">
+            <div className="ui-form-group">
+              <label>Target Audience *</label>
+              <select
+                className="ui-form-control"
+                value={formData.audience}
+                onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
+              >
+                <option value="All">All (School-wide)</option>
+                <option value="Students">Students Only</option>
+                <option value="Teachers">Teachers & Staff Only</option>
+                <option value="Parents">Parents Only</option>
+              </select>
             </div>
-
-
-            <div className="form-group">
-              <label>
-                Description *
-              </label>
-
-              <textarea
-                name="description"
-                placeholder="Write notice details..."
-                value={formData.description}
-                onChange={handleChange}
-                rows="4"
+            <div className="ui-form-group">
+              <label>Expiry Date *</label>
+              <input
+                type="date"
+                className="ui-form-control"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                required
               />
             </div>
-
-
-            <div className="form-actions">
-
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={() => setShowForm(false)}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="save-notice-btn"
-              >
-                Save Notice
-              </button>
-
-            </div>
-
-          </form>
-
-        </div>
-      )}
-
-
-      {/* NOTICE LIST */}
-
-      <div className="notice-list-card">
-
-        <div className="list-header">
-
-          <div>
-            <h2>
-              All Notices
-            </h2>
-
-            <p>
-              {notices.length} notices available
-            </p>
           </div>
 
-        </div>
+          <div className="ui-form-group">
+            <label>Notice Content *</label>
+            <textarea
+              className="ui-form-control"
+              rows={4}
+              placeholder="Write the full notice details here..."
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              required
+            />
+          </div>
+        </form>
+      </Modal>
 
-
-        <div className="notice-list">
-
-          {notices.length === 0 ? (
-
-            <div className="empty-notices">
-              <span>📭</span>
-              <h3>No Notices Found</h3>
-              <p>
-                Create your first school notice.
-              </p>
+      {/* View Notice Preview Modal */}
+      <Modal
+        isOpen={!!previewNotice}
+        onClose={() => setPreviewNotice(null)}
+        title={`Notice: ${previewNotice?.title}`}
+        footer={
+          <button className="ui-btn ui-btn-secondary" onClick={() => setPreviewNotice(null)}>Close</button>
+        }
+      >
+        {previewNotice && (
+          <div>
+            <div style={{ display: "flex", gap: "10px", marginBottom: "12px", alignItems: "center" }}>
+              <span className="ui-badge ui-badge-purple">{previewNotice.audience}</span>
+              <StatusBadge status={previewNotice.status} />
+              <span style={{ fontSize: "12px", color: "var(--text-muted)", marginLeft: "auto" }}>
+                Published: {previewNotice.publishDate}
+              </span>
             </div>
-
-          ) : (
-
-            notices.map((notice) => (
-
-              <div
-                className="notice-item"
-                key={notice.id}
-              >
-
-                <div className="notice-main">
-
-                  <div className="notice-item-icon">
-                    📢
-                  </div>
-
-
-                  <div className="notice-content">
-
-                    <div className="notice-item-top">
-
-                      <h3>
-                        {notice.title}
-                      </h3>
-
-                      <span
-                        className={`priority-badge ${notice.priority.toLowerCase()}`}
-                      >
-                        {notice.priority}
-                      </span>
-
-                    </div>
-
-
-                    <div className="notice-meta">
-
-                      <span>
-                        📁 {notice.category}
-                      </span>
-
-                      <span>
-                        📅 {notice.date}
-                      </span>
-
-                    </div>
-
-
-                    <p>
-                      {notice.description}
-                    </p>
-
-                  </div>
-
-                </div>
-
-
-                <button
-                  className="delete-notice-btn"
-                  onClick={() => deleteNotice(notice.id)}
-                  title="Delete Notice"
-                >
-                  🗑️
-                </button>
-
-              </div>
-
-            ))
-
-          )}
-
-        </div>
-
-      </div>
-
+            <div style={{ background: "#f8fafc", padding: "16px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", lineHeight: "1.6" }}>
+              {previewNotice.content}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

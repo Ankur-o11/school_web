@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import "../Style/students.css";
+import "../Style/whatsapp-modal.css";
+import { useAuth } from "../context/AuthContext";
+import { isValidWhatsAppNumber } from "../services/whatsappService";
+import WhatsAppModal from "../components/WhatsAppModal";
+import BulkWhatsAppModal from "../components/BulkWhatsAppModal";
 
 function Students() {
+  // =====================================================
+  // AUTH & PERMISSIONS
+  // =====================================================
+  const { fetchWithAuth } = useAuth();
+
   // =====================================================
   // STATES
   // =====================================================
@@ -15,6 +25,14 @@ function Students() {
 
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("All");
+  const [sectionFilter, setSectionFilter] = useState("All");
+  const [genderFilter, setGenderFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+
+  // WhatsApp states
+  const [selectedStudentForWhatsApp, setSelectedStudentForWhatsApp] = useState(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const [showBulkWhatsAppModal, setShowBulkWhatsAppModal] = useState(false);
 
   // =====================================================
   // EMPTY FORM
@@ -122,6 +140,24 @@ function Students() {
   };
 
   // =====================================================
+  // BULK SELECTION HANDLERS
+  // =====================================================
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedStudentIds(filteredStudents.map((s) => s.id));
+    } else {
+      setSelectedStudentIds([]);
+    }
+  };
+
+  const handleSelectStudent = (id) => {
+    setSelectedStudentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  // =====================================================
   // LOAD STUDENTS
   // =====================================================
 
@@ -129,9 +165,7 @@ function Students() {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/students"
-      );
+      const response = await fetchWithAuth("/students");
 
       if (!response.ok) {
         throw new Error(
@@ -307,15 +341,10 @@ function Students() {
     };
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/students/${editingId}`,
+      const response = await fetchWithAuth(
+        `/students/${editingId}`,
         {
           method: "PUT",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
           body: JSON.stringify(studentData),
         }
       );
@@ -383,8 +412,8 @@ function Students() {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/students/${id}`,
+      const response = await fetchWithAuth(
+        `/students/${id}`,
         {
           method: "DELETE",
         }
@@ -468,15 +497,33 @@ function Students() {
         classFilter === "All" ||
         student.className === classFilter;
 
+      const matchesSection =
+        sectionFilter === "All" ||
+        (student.section || "").toUpperCase() === sectionFilter.toUpperCase();
+
+      const matchesGender =
+        genderFilter === "All" ||
+        (student.gender || "").toLowerCase() === genderFilter.toLowerCase();
+
+      const matchesStatus =
+        statusFilter === "All" ||
+        (student.status || "Active").toLowerCase() === statusFilter.toLowerCase();
+
       return (
         matchesSearch &&
-        matchesClass
+        matchesClass &&
+        matchesSection &&
+        matchesGender &&
+        matchesStatus
       );
     });
   }, [
     students,
     search,
     classFilter,
+    sectionFilter,
+    genderFilter,
+    statusFilter,
   ]);
 
   // =====================================================
@@ -1217,53 +1264,74 @@ function Students() {
       </div>
 
       {/* =================================================
-          CLASS FILTER
+          FILTERS
       ================================================= */}
 
-      <div className="student-filter-card">
+      <div className="student-filter-card" style={{ flexWrap: "wrap", gap: "16px" }}>
 
-        <div className="filter-left">
+        <div className="filter-left" style={{ flexWrap: "wrap", gap: "14px" }}>
 
-          <label>
-            Select Class
-          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label style={{ fontWeight: "700", fontSize: "13px" }}>Class:</label>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+            >
+              <option value="All">All Classes</option>
+              {classes.map((className) => (
+                <option key={className} value={className}>
+                  {getClassDisplayName(className)}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            value={classFilter}
-            onChange={(e) =>
-              setClassFilter(
-                e.target.value
-              )
-            }
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label style={{ fontWeight: "700", fontSize: "13px" }}>Section:</label>
+            <select
+              value={sectionFilter}
+              onChange={(e) => setSectionFilter(e.target.value)}
+              style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+            >
+              <option value="All">All Sections</option>
+              <option value="A">Section A</option>
+              <option value="B">Section B</option>
+              <option value="C">Section C</option>
+            </select>
+          </div>
 
-            <option value="All">
-              All Classes
-            </option>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label style={{ fontWeight: "700", fontSize: "13px" }}>Gender:</label>
+            <select
+              value={genderFilter}
+              onChange={(e) => setGenderFilter(e.target.value)}
+              style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+            >
+              <option value="All">All Genders</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
-            {classes.map((className) => (
-              <option
-                key={className}
-                value={className}
-              >
-                {getClassDisplayName(
-                  className
-                )}
-              </option>
-            ))}
-
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label style={{ fontWeight: "700", fontSize: "13px" }}>Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{ padding: "6px 10px", borderRadius: "8px", border: "1px solid #d1d5db" }}
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
 
         </div>
 
         <div className="filter-selected">
-
-          {classFilter === "All"
-            ? "Showing All Classes"
-            : `Showing ${getClassDisplayName(
-                classFilter
-              )}`}
-
+          Showing {filteredStudents.length} Students
         </div>
 
       </div>
@@ -1412,6 +1480,33 @@ function Students() {
 
         </div>
 
+        {selectedStudentIds.length > 0 && (
+          <button
+            type="button"
+            className="bulk-whatsapp-trigger-btn"
+            onClick={() => setShowBulkWhatsAppModal(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 18px",
+              marginLeft: "12px",
+              background: "#25D366",
+              color: "white",
+              border: "none",
+              borderRadius: "9px",
+              fontWeight: "700",
+              fontSize: "14px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 8px rgba(37, 211, 102, 0.3)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            💬 Send Bulk WhatsApp ({selectedStudentIds.length})
+          </button>
+        )}
+
       </div>
 
       {/* =================================================
@@ -1455,6 +1550,19 @@ function Students() {
       <div className="students-table">
 
         <div className="student-row table-heading">
+
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <input
+              type="checkbox"
+              checked={
+                filteredStudents.length > 0 &&
+                selectedStudentIds.length === filteredStudents.length
+              }
+              onChange={handleSelectAll}
+              style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              title="Select All Students"
+            />
+          </span>
 
           <span>
             Student
@@ -1518,109 +1626,139 @@ function Students() {
           /* DATA */
 
           filteredStudents.map(
-            (student) => (
-              <div
-                className="student-row"
-                key={student.id}
-              >
+            (student) => {
+              const phone = student.mobile || student.alternateMobile;
+              const hasValidPhone = isValidWhatsAppNumber(phone);
 
-                <span className="student-name-cell">
+              return (
+                <div
+                  className="student-row"
+                  key={student.id}
+                >
 
-                  <strong>
-                    {student.name}
-                  </strong>
-
-                  <small>
-                    Father:{" "}
-                    {student.father ||
-                      "Not Provided"}
-                  </small>
-
-                </span>
-
-                <span>
-                  {student.className ||
-                    "—"}
-
-                  {student.section
-                    ? `-${student.section}`
-                    : ""}
-                </span>
-
-                <span>
-                  {student.roll ||
-                    "—"}
-                </span>
-
-                <span>
-                  {student.mobile ||
-                    "—"}
-                </span>
-
-                <span>
-
-                  <span
-                    className={
-                      student.status ===
-                      "Active"
-                        ? "active"
-                        : "inactive"
-                    }
-                  >
-                    {student.status ||
-                      "Inactive"}
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedStudentIds.includes(student.id)}
+                      onChange={() => handleSelectStudent(student.id)}
+                      style={{ width: "16px", height: "16px", cursor: "pointer" }}
+                    />
                   </span>
 
-                </span>
+                  <span className="student-name-cell">
 
-                <span className="action-buttons">
+                    <strong>
+                      {student.name}
+                    </strong>
 
-                  {/* VIEW */}
+                    <small>
+                      Father:{" "}
+                      {student.father ||
+                        "Not Provided"}
+                    </small>
 
-                  <button
-                    type="button"
-                    title="View Student"
-                    onClick={() =>
-                      setViewStudent(
-                        student
-                      )
-                    }
-                  >
-                    👁️
-                  </button>
+                  </span>
 
-                  {/* EDIT */}
+                  <span>
+                    {student.className ||
+                      "—"}
 
-                  <button
-                    type="button"
-                    title="Edit Student"
-                    onClick={() =>
-                      openEditForm(
-                        student
-                      )
-                    }
-                  >
-                    ✏️
-                  </button>
+                    {student.section
+                      ? `-${student.section}`
+                      : ""}
+                  </span>
 
-                  {/* DELETE */}
+                  <span>
+                    {student.roll ||
+                      "—"}
+                  </span>
 
-                  <button
-                    type="button"
-                    title="Delete Student"
-                    onClick={() =>
-                      deleteStudent(
-                        student.id
-                      )
-                    }
-                  >
-                    🗑️
-                  </button>
+                  <span>
+                    {student.mobile ||
+                      "—"}
+                  </span>
 
-                </span>
+                  <span>
 
-              </div>
-            )
+                    <span
+                      className={
+                        student.status ===
+                        "Active"
+                          ? "active"
+                          : "inactive"
+                      }
+                    >
+                      {student.status ||
+                        "Inactive"}
+                    </span>
+
+                  </span>
+
+                  <span className="action-buttons">
+
+                    {/* WHATSAPP ACTION BUTTON */}
+
+                    <button
+                      type="button"
+                      className={`whatsapp-action-btn ${hasValidPhone ? "active" : "disabled"}`}
+                      title={
+                        hasValidPhone
+                          ? `Send WhatsApp Message to ${student.name} (${phone})`
+                          : "WhatsApp number not available"
+                      }
+                      disabled={!hasValidPhone}
+                      onClick={() => setSelectedStudentForWhatsApp(student)}
+                    >
+                      💬
+                    </button>
+
+                    {/* VIEW */}
+
+                    <button
+                      type="button"
+                      title="View Student"
+                      onClick={() =>
+                        setViewStudent(
+                          student
+                        )
+                      }
+                    >
+                      👁️
+                    </button>
+
+                    {/* EDIT */}
+
+                    <button
+                      type="button"
+                      title="Edit Student"
+                      onClick={() =>
+                        openEditForm(
+                          student
+                        )
+                      }
+                    >
+                      ✏️
+                    </button>
+
+                    {/* DELETE */}
+
+                    <button
+                      type="button"
+                      title="Delete Student"
+                      onClick={() =>
+                        deleteStudent(
+                          student.id
+                        )
+                      }
+                    >
+                      🗑️
+                    </button>
+
+                  </span>
+
+                </div>
+              );
+            }
           )
 
         )}
@@ -2601,6 +2739,40 @@ function Students() {
                 Close
               </button>
 
+              {(() => {
+                const phone = viewStudent.mobile || viewStudent.alternateMobile;
+                const hasValidPhone = isValidWhatsAppNumber(phone);
+                return (
+                  <button
+                    type="button"
+                    style={{
+                      background: hasValidPhone ? "#25D366" : "#cbd5e1",
+                      color: "white",
+                      border: "none",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      fontWeight: "700",
+                      cursor: hasValidPhone ? "pointer" : "not-allowed",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}
+                    title={
+                      hasValidPhone
+                        ? `Send WhatsApp Message to ${phone}`
+                        : "WhatsApp number not available"
+                    }
+                    disabled={!hasValidPhone}
+                    onClick={() => {
+                      const current = viewStudent;
+                      setSelectedStudentForWhatsApp(current);
+                    }}
+                  >
+                    💬 WhatsApp Parent
+                  </button>
+                );
+              })()}
+
               <button
                 type="button"
                 className="print-student-btn"
@@ -2635,6 +2807,27 @@ function Students() {
           </div>
 
         </div>
+      )}
+
+      {/* =================================================
+          WHATSAPP MODALS
+      ================================================= */}
+
+      {selectedStudentForWhatsApp && (
+        <WhatsAppModal
+          student={selectedStudentForWhatsApp}
+          onClose={() => setSelectedStudentForWhatsApp(null)}
+        />
+      )}
+
+      {showBulkWhatsAppModal && (
+        <BulkWhatsAppModal
+          selectedStudents={students.filter((s) =>
+            selectedStudentIds.includes(s.id)
+          )}
+          onClose={() => setShowBulkWhatsAppModal(false)}
+          onSuccess={() => setSelectedStudentIds([])}
+        />
       )}
 
     </div>

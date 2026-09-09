@@ -1,9 +1,4 @@
-// =====================================================
-// RESULTS ROUTES
-// =====================================================
-
 import express from "express";
-
 import {
   create,
   getAll,
@@ -13,33 +8,29 @@ import {
   publish,
   unpublish,
 } from "./results.controller.js";
+import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+router.use(authenticate);
+
 // GET all results
-// Example:
-// /api/results
-// /api/results?className=10
-// /api/results?session=2026-27
-// /api/results?studentId=123
-router.get("/", getAll);
+router.get("/", authorizePermission("results.view"), getAll);
 
 // CREATE result
-router.post("/", create);
+router.post("/", authorizePermission("results.enter"), create);
 
 // GET single result
-router.get("/:id", getOne);
+router.get("/:id", authorizePermission("results.view"), getOne);
 
 // UPDATE result
-router.put("/:id", update);
+router.put("/:id", authorizePermission("results.edit"), update);
 
 // DELETE result
-router.delete("/:id", remove);
+router.delete("/:id", authorizePermission("results.edit"), remove);
 
-// PUBLISH
-router.patch("/:id/publish", publish);
-
-// UNPUBLISH
-router.patch("/:id/unpublish", unpublish);
+// PUBLISH / UNPUBLISH
+router.patch("/:id/publish", authorizePermission("results.publish"), publish);
+router.patch("/:id/unpublish", authorizePermission("results.publish"), unpublish);
 
 export default router;

@@ -1,225 +1,129 @@
-import "../Style/Parents.css";
+import { useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import ActionMenu from "../components/ui/ActionMenu";
+import Modal from "../components/ui/Modal";
+import "../Style/ui.css";
 
-function Parents() {
-  return (
-    <div className="parents-page">
+const INITIAL_PARENTS = [
+  {
+    id: "PRT-001",
+    name: "Vikram Sharma",
+    phone: "+91 9876543210",
+    email: "vikram.sharma@example.com",
+    address: "H.No 42, Sector 14, New Delhi",
+    children: ["Aarav Sharma (Class 10-A)"],
+    status: "Active"
+  },
+  {
+    id: "PRT-002",
+    name: "Sanjay Patel",
+    phone: "+91 9812345678",
+    email: "sanjay.p@example.com",
+    address: "B-12, Model Town, Delhi",
+    children: ["Ananya Patel (Class 10-A)", "Rohan Patel (Class 6-B)"],
+    status: "Active"
+  },
+  {
+    id: "PRT-003",
+    name: "Rajesh Verma",
+    phone: "+91 9898989898",
+    email: "r.verma@example.com",
+    address: "C-4, Punjabi Bagh, Delhi",
+    children: ["Rohan Verma (Class 12-A)"],
+    status: "Active"
+  }
+];
 
-      <div className="parents-header">
+export function Parents() {
+  const [parents] = useState(INITIAL_PARENTS);
+  const [selectedParent, setSelectedParent] = useState(null);
+
+  const columns = [
+    { header: "Parent Name", accessor: "name", render: (row) => <strong>{row.name}</strong> },
+    { header: "Phone Number", accessor: "phone" },
+    { header: "Email Address", accessor: "email" },
+    { header: "Address", accessor: "address" },
+    {
+      header: "Linked Children",
+      accessor: "children",
+      render: (row) => (
         <div>
-          <h1>👨‍👩‍👧 Parents</h1>
-          <p>Manage student parents and guardians.</p>
+          {row.children.map((c, idx) => (
+            <span key={idx} className="ui-badge ui-badge-purple" style={{ marginRight: "4px", marginBottom: "2px" }}>
+              {c}
+            </span>
+          ))}
         </div>
+      )
+    },
+    { header: "Status", accessor: "status", render: (row) => <StatusBadge status={row.status} /> },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <ActionMenu
+          actions={[
+            { label: "View Parent Profile", icon: "👤", onClick: () => setSelectedParent(row) },
+            { label: "Send Message", icon: "💬", onClick: () => alert(`Sending message to ${row.name}`) }
+          ]}
+        />
+      )
+    }
+  ];
 
-        <button className="parents-add-btn">
-          + Add Parent
-        </button>
-      </div>
+  return (
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Directory"
+        title="Parent Directory"
+        description="Manage parent profiles, linked students, contact numbers, and communication channels."
+        icon="👨‍👩‍👧"
+      />
 
+      <StatGrid>
+        <StatCard title="Registered Parents" value={parents.length} icon="👨‍👩‍👧" />
+        <StatCard title="Multiple-Child Families" value={parents.filter((p) => p.children.length > 1).length} icon="👨‍👩‍👧‍👦" />
+        <StatCard title="Verified Phone Contacts" value="100%" icon="📱" />
+        <StatCard title="Active Status" value="100%" icon="✅" />
+      </StatGrid>
 
-      <div className="parents-stats">
+      <DataTable
+        columns={columns}
+        data={parents}
+        searchPlaceholder="Search parent name, phone, student name..."
+      />
 
-        <div className="parents-stat-card">
-          <div className="parents-stat-icon">👨‍👩‍👧</div>
-          <div>
-            <span>Total Parents</span>
-            <strong>850</strong>
-          </div>
-        </div>
-
-        <div className="parents-stat-card">
-          <div className="parents-stat-icon">👨</div>
-          <div>
-            <span>Fathers</span>
-            <strong>520</strong>
-          </div>
-        </div>
-
-        <div className="parents-stat-card">
-          <div className="parents-stat-icon">👩</div>
-          <div>
-            <span>Mothers</span>
-            <strong>310</strong>
-          </div>
-        </div>
-
-        <div className="parents-stat-card">
-          <div className="parents-stat-icon">👥</div>
-          <div>
-            <span>Guardians</span>
-            <strong>20</strong>
-          </div>
-        </div>
-
-      </div>
-
-
-      <div className="parents-card">
-
-        <div className="parents-card-header">
-
-          <div>
-            <h2>Parent Directory</h2>
-            <p>View and manage registered parents.</p>
-          </div>
-
-          <input
-            className="parents-search"
-            type="text"
-            placeholder="Search parent..."
-          />
-
-        </div>
-
-
-        <div className="parents-table-wrapper">
-
-          <table className="parents-table">
-
-            <thead>
-              <tr>
-                <th>Parent</th>
-                <th>Student</th>
-                <th>Class</th>
-                <th>Contact</th>
-                <th>Relation</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              <tr>
-                <td>
-                  <div className="parent-person">
-                    <div className="parent-avatar">R</div>
-                    <strong>Rajesh Kumar</strong>
+      {/* Parent Profile Modal */}
+      <Modal
+        isOpen={!!selectedParent}
+        onClose={() => setSelectedParent(null)}
+        title={`Parent Profile: ${selectedParent?.name}`}
+        footer={
+          <button className="ui-btn ui-btn-secondary" onClick={() => setSelectedParent(null)}>Close Profile</button>
+        }
+      >
+        {selectedParent && (
+          <div style={{ fontSize: "14px", lineHeight: "1.8" }}>
+            <p><strong>Parent Full Name:</strong> {selectedParent.name}</p>
+            <p><strong>Primary Phone:</strong> {selectedParent.phone}</p>
+            <p><strong>Email Address:</strong> {selectedParent.email}</p>
+            <p><strong>Residential Address:</strong> {selectedParent.address}</p>
+            <div style={{ marginTop: "16px" }}>
+              <strong>Enrolled Children:</strong>
+              <div style={{ marginTop: "8px" }}>
+                {selectedParent.children.map((c, i) => (
+                  <div key={i} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "6px", border: "1px solid #e2e8f0", marginBottom: "6px" }}>
+                    🎓 {c}
                   </div>
-                </td>
-
-                <td>Aarav Kumar</td>
-                <td>10-A</td>
-                <td>9876543210</td>
-                <td>Father</td>
-
-                <td>
-                  <span className="parent-active">
-                    Active
-                  </span>
-                </td>
-
-                <td>
-                  <button className="parent-view-btn">
-                    View
-                  </button>
-
-                  <button className="parent-edit-btn">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-
-
-              <tr>
-                <td>
-                  <div className="parent-person">
-                    <div className="parent-avatar">S</div>
-                    <strong>Sunita Sharma</strong>
-                  </div>
-                </td>
-
-                <td>Ananya Sharma</td>
-                <td>9-B</td>
-                <td>9876501234</td>
-                <td>Mother</td>
-
-                <td>
-                  <span className="parent-active">
-                    Active
-                  </span>
-                </td>
-
-                <td>
-                  <button className="parent-view-btn">
-                    View
-                  </button>
-
-                  <button className="parent-edit-btn">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-
-
-              <tr>
-                <td>
-                  <div className="parent-person">
-                    <div className="parent-avatar">A</div>
-                    <strong>Amit Singh</strong>
-                  </div>
-                </td>
-
-                <td>Rohan Singh</td>
-                <td>8-A</td>
-                <td>9812345678</td>
-                <td>Father</td>
-
-                <td>
-                  <span className="parent-active">
-                    Active
-                  </span>
-                </td>
-
-                <td>
-                  <button className="parent-view-btn">
-                    View
-                  </button>
-
-                  <button className="parent-edit-btn">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-
-
-              <tr>
-                <td>
-                  <div className="parent-person">
-                    <div className="parent-avatar">P</div>
-                    <strong>Pooja Verma</strong>
-                  </div>
-                </td>
-
-                <td>Priya Verma</td>
-                <td>7-B</td>
-                <td>9898765432</td>
-                <td>Mother</td>
-
-                <td>
-                  <span className="parent-active">
-                    Active
-                  </span>
-                </td>
-
-                <td>
-                  <button className="parent-view-btn">
-                    View
-                  </button>
-
-                  <button className="parent-edit-btn">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

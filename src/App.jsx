@@ -1,11 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/sidebar";
+
+/* ================================
+   AUTH
+================================ */
+import Login from "./pages/Login";
 
 /* ================================
    EXISTING PAGES
 ================================ */
-
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/student";
 import Fees from "./pages/fees";
@@ -24,7 +29,6 @@ import Exams from "./pages/Exams";
 /* ================================
    NEW PAGES
 ================================ */
-
 import Notices from "./pages/Notices";
 import Certificates from "./pages/Certificates";
 import Transport from "./pages/Transport";
@@ -44,337 +48,268 @@ import Notifications from "./pages/Notifications";
 
 import "./App.css";
 
+function AppLayout() {
+  return (
+    <div className="app">
+      <Sidebar />
+      <main className="main-content">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/school-admin"
+            element={
+              <ProtectedRoute requiredPermission="settings.manage">
+                <SchoolAdmin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/students"
+            element={
+              <ProtectedRoute requiredPermission="students.view">
+                <Students />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teachers"
+            element={
+              <ProtectedRoute requiredPermission="teachers.view">
+                <Teachers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute requiredPermission="attendance.view">
+                <Attendance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher-attendance"
+            element={
+              <ProtectedRoute requiredPermission="attendance.view">
+                <TeacherAttendance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher-salary"
+            element={
+              <ProtectedRoute requiredPermission="salary.view">
+                <TeacherSalary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fees"
+            element={
+              <ProtectedRoute requiredPermission="fees.view">
+                <Fees />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results"
+            element={
+              <ProtectedRoute requiredPermission="results.view">
+                <Results />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admissions"
+            element={
+              <ProtectedRoute requiredPermission="admissions.view">
+                <Admission />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classes"
+            element={
+              <ProtectedRoute requiredPermission="classes.view">
+                <Classes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subjects"
+            element={
+              <ProtectedRoute requiredPermission="subjects.view">
+                <Subjects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/exams"
+            element={
+              <ProtectedRoute requiredPermission="results.view">
+                <Exams />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/timetable"
+            element={
+              <ProtectedRoute requiredPermission="timetable.view">
+                <Timetable />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notices"
+            element={
+              <ProtectedRoute requiredPermission="notices.view">
+                <Notices />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/certificates"
+            element={
+              <ProtectedRoute requiredPermission="students.view">
+                <Certificates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transport"
+            element={
+              <ProtectedRoute requiredPermission="transport.view">
+                <Transport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute requiredPermission="inventory.view">
+                <Inventory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute requiredPermission="reports.view">
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roles-permissions"
+            element={
+              <ProtectedRoute requiredPermission="settings.manage">
+                <RolesPermissions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activity-log"
+            element={
+              <ProtectedRoute requiredPermission="settings.manage">
+                <ActivityLog />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute requiredPermission="settings.manage">
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gallery"
+            element={
+              <ProtectedRoute>
+                <Gallery />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parents"
+            element={
+              <ProtectedRoute requiredPermission="students.view">
+                <Parents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/parent-communication"
+            element={
+              <ProtectedRoute requiredPermission="notices.view">
+                <ParentCommunication />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute>
+                <Events />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/homework"
+            element={
+              <ProtectedRoute requiredPermission="homework.view">
+                <Homework />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <ProtectedRoute>
+                <Library />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/health-records"
+            element={
+              <ProtectedRoute requiredPermission="students.view">
+                <HealthRecords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </main>
+    </div>
+  );
+}
 
 function App() {
-
   return (
-
     <BrowserRouter>
-
-      <div className="app">
-
-        {/* ================================
-            SIDEBAR
-        ================================= */}
-
-        <Sidebar />
-
-
-        {/* ================================
-            MAIN CONTENT
-        ================================= */}
-
-        <main className="main-content">
-
-          <Routes>
-
-            {/* ================================
-                DASHBOARD
-            ================================= */}
-
-            <Route
-              path="/"
-              element={<Dashboard />}
-            />
-
-
-            {/* ================================
-                SCHOOL ADMIN
-            ================================= */}
-
-            <Route
-              path="/school-admin"
-              element={<SchoolAdmin />}
-            />
-
-
-            {/* ================================
-                STUDENTS
-            ================================= */}
-
-            <Route
-              path="/students"
-              element={<Students />}
-            />
-
-
-            {/* ================================
-                TEACHERS
-            ================================= */}
-
-            <Route
-              path="/teachers"
-              element={<Teachers />}
-            />
-
-
-            {/* ================================
-                ATTENDANCE
-            ================================= */}
-
-            <Route
-              path="/attendance"
-              element={<Attendance />}
-            />
-
-
-            {/* ================================
-                TEACHER ATTENDANCE
-            ================================= */}
-
-            <Route
-              path="/teacher-attendance"
-              element={<TeacherAttendance />}
-            />
-
-
-            {/* ================================
-                TEACHER SALARY
-            ================================= */}
-
-            <Route
-              path="/teacher-salary"
-              element={<TeacherSalary />}
-            />
-
-
-            {/* ================================
-                FEES
-            ================================= */}
-
-            <Route
-              path="/fees"
-              element={<Fees />}
-            />
-
-
-            {/* ================================
-                RESULTS
-            ================================= */}
-
-            <Route
-              path="/results"
-              element={<Results />}
-            />
-
-
-            {/* ================================
-                ADMISSIONS
-            ================================= */}
-
-            <Route
-              path="/admissions"
-              element={<Admission />}
-            />
-
-
-            {/* ================================
-                CLASSES & SECTIONS
-            ================================= */}
-
-            <Route
-              path="/classes"
-              element={<Classes />}
-            />
-
-
-            {/* ================================
-                SUBJECTS
-            ================================= */}
-
-            <Route
-              path="/subjects"
-              element={<Subjects />}
-            />
-
-
-            {/* ================================
-                EXAMS
-            ================================= */}
-
-            <Route
-              path="/exams"
-              element={<Exams />}
-            />
-
-
-            {/* ================================
-                TIMETABLE
-            ================================= */}
-
-            <Route
-              path="/timetable"
-              element={<Timetable />}
-            />
-
-
-            {/* ================================
-                NOTICES
-            ================================= */}
-
-            <Route
-              path="/notices"
-              element={<Notices />}
-            />
-
-
-            {/* ================================
-                CERTIFICATES
-            ================================= */}
-
-            <Route
-              path="/certificates"
-              element={<Certificates />}
-            />
-
-
-            {/* ================================
-                TRANSPORT
-            ================================= */}
-
-            <Route
-              path="/transport"
-              element={<Transport />}
-            />
-
-
-            {/* ================================
-                INVENTORY
-            ================================= */}
-
-            <Route
-              path="/inventory"
-              element={<Inventory />}
-            />
-
-
-            {/* ================================
-                REPORTS
-            ================================= */}
-
-            <Route
-              path="/reports"
-              element={<Reports />}
-            />
-
-
-            {/* ================================
-                ROLES & PERMISSIONS
-            ================================= */}
-
-            <Route
-              path="/roles-permissions"
-              element={<RolesPermissions />}
-            />
-
-
-            {/* ================================
-                ACTIVITY LOG
-            ================================= */}
-
-            <Route
-              path="/activity-log"
-              element={<ActivityLog />}
-            />
-
-
-            {/* ================================
-                SETTINGS
-            ================================= */}
-
-            <Route
-              path="/settings"
-              element={<Settings />}
-            />
-
-
-            {/* ================================
-                GALLERY
-            ================================= */}
-
-            <Route
-              path="/gallery"
-              element={<Gallery />}
-            />
-
-
-            {/* ================================
-                PARENTS
-            ================================= */}
-
-            <Route
-              path="/parents"
-              element={<Parents />}
-            />
-
-
-            {/* ================================
-                PARENT COMMUNICATION
-            ================================= */}
-
-            <Route
-              path="/parent-communication"
-              element={<ParentCommunication />}
-            />
-
-
-            {/* ================================
-                EVENTS & ACTIVITIES
-            ================================= */}
-
-            <Route
-              path="/events"
-              element={<Events />}
-            />
-
-
-            {/* ================================
-                HOMEWORK & ASSIGNMENTS
-            ================================= */}
-
-            <Route
-              path="/homework"
-              element={<Homework />}
-            />
-
-
-            {/* ================================
-                LIBRARY
-            ================================= */}
-
-            <Route
-              path="/library"
-              element={<Library />}
-            />
-
-
-            {/* ================================
-                HEALTH RECORDS
-            ================================= */}
-
-            <Route
-              path="/health-records"
-              element={<HealthRecords />}
-            />
-
-
-            {/* ================================
-                NOTIFICATIONS
-            ================================= */}
-
-            <Route
-              path="/notifications"
-              element={<Notifications />}
-            />
-
-          </Routes>
-
-        </main>
-
-      </div>
-
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/*" element={<AppLayout />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
-
   );
 }
 

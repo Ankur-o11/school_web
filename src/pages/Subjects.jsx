@@ -1,162 +1,38 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 /* =====================================================
    SUBJECTS + SYLLABUS MANAGEMENT
    ===================================================== */
 
 function Subjects() {
+  const { fetchWithAuth } = useAuth();
+  const [loading, setLoading] = useState(true);
   /* =====================================================
      SUBJECT DATA
      ===================================================== */
 
-  const [subjects, setSubjects] = useState([
-    {
-      id: 1,
-      name: "English",
-      code: "ENG101",
-      className: "Class 1",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Neha Sharma",
-      periods: 6,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Hindi",
-      code: "HIN101",
-      className: "Class 1",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Pooja Singh",
-      periods: 5,
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Mathematics",
-      code: "MAT101",
-      className: "Class 1",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Rahul Kumar",
-      periods: 7,
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "EVS",
-      code: "EVS101",
-      className: "Class 2",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Anjali Gupta",
-      periods: 5,
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Science",
-      code: "SCI601",
-      className: "Class 6",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Amit Singh",
-      periods: 6,
-      status: "Active",
-    },
-    {
-      id: 6,
-      name: "Social Science",
-      code: "SST601",
-      className: "Class 6",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Kavita Sharma",
-      periods: 5,
-      status: "Active",
-    },
-    {
-      id: 7,
-      name: "Computer",
-      code: "COM601",
-      className: "Class 6",
-      section: "A",
-      type: "Optional",
-      teacher: "Mr. Sandeep Yadav",
-      periods: 2,
-      status: "Active",
-    },
-    {
-      id: 8,
-      name: "Physics",
-      code: "PHY111",
-      className: "Class 11",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Rajesh Kumar",
-      periods: 6,
-      status: "Active",
-    },
-    {
-      id: 9,
-      name: "Chemistry",
-      code: "CHE111",
-      className: "Class 11",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Sanjay Singh",
-      periods: 6,
-      status: "Active",
-    },
-    {
-      id: 10,
-      name: "Mathematics",
-      code: "MAT111",
-      className: "Class 11",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Deepak Sharma",
-      periods: 7,
-      status: "Active",
-    },
+  const [subjects, setSubjects] = useState([]);
 
-    /* CLASS 5 DEMO SUBJECTS */
+  const loadSubjects = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchWithAuth("/subjects");
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      const data = await response.json();
+      setSubjects(data.subjects || data.data || []);
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    {
-      id: 11,
-      name: "Hindi",
-      code: "HIN501",
-      className: "Class 5",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Pooja Singh",
-      periods: 6,
-      status: "Active",
-    },
-    {
-      id: 12,
-      name: "Mathematics",
-      code: "MAT501",
-      className: "Class 5",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mr. Rahul Kumar",
-      periods: 7,
-      status: "Active",
-    },
-    {
-      id: 13,
-      name: "English",
-      code: "ENG501",
-      className: "Class 5",
-      section: "A",
-      type: "Compulsory",
-      teacher: "Mrs. Neha Sharma",
-      periods: 6,
-      status: "Active",
-    },
-  ]);
+  useEffect(() => {
+    loadSubjects();
+  }, []);
 
   /* =====================================================
      SYLLABUS DATA
@@ -622,7 +498,11 @@ function Subjects() {
      SAVE SUBJECT
      ===================================================== */
 
-  const handleSubjectSubmit = (e) => {
+  /* =====================================================
+     SAVE SUBJECT
+     ===================================================== */
+
+  const handleSubjectSubmit = async (e) => {
     e.preventDefault();
 
     if (
@@ -631,119 +511,89 @@ function Subjects() {
       !form.className ||
       !form.teacher
     ) {
-      alert(
-        "Please fill all required fields."
-      );
+      alert("Please fill all required fields.");
       return;
     }
 
-    if (editingId) {
-      setSubjects(
-        subjects.map((item) =>
-          item.id === editingId
-            ? {
-                ...item,
-                name: form.name,
-                code: form.code,
-                className:
-                  form.className,
-                section:
-                  form.section,
-                type: form.type,
-                teacher:
-                  form.teacher,
-                periods:
-                  Number(
-                    form.periods
-                  ),
-              }
-            : item
-        )
-      );
-
-      /* Update teacher/class in syllabus too */
-
-      setSyllabusData(
-        syllabusData.map(
-          (syllabus) =>
-            syllabus.subjectId ===
-            editingId
-              ? {
-                  ...syllabus,
-                  subjectName:
-                    form.name,
-                  className:
-                    form.className,
-                  section:
-                    form.section,
-                  teacher:
-                    form.teacher,
-                }
-              : syllabus
-        )
-      );
-    } else {
-      const newId =
-        Date.now();
-
-      const newSubject = {
-        id: newId,
+    try {
+      const payload = {
         name: form.name,
         code: form.code,
-        className:
-          form.className,
-        section:
-          form.section,
-        type: form.type,
-        teacher:
-          form.teacher,
-        periods:
-          Number(form.periods),
+        className: form.className,
+        class: form.className,
+        section: form.section || "A",
+        type: form.type || "Compulsory",
+        teacher: form.teacher,
+        periods: Number(form.periods) || 5,
         status: "Active",
       };
 
-      setSubjects([
-        ...subjects,
-        newSubject,
-      ]);
-    }
+      if (editingId) {
+        const response = await fetchWithAuth(`/subjects/${editingId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
 
-    setForm(emptyForm);
-    setEditingId(null);
-    setShowSubjectModal(false);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update subject");
+        }
+
+        alert("Subject updated successfully!");
+      } else {
+        const response = await fetchWithAuth("/subjects", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to create subject");
+        }
+
+        alert("Subject created successfully!");
+      }
+
+      await loadSubjects();
+      setForm(emptyForm);
+      setEditingId(null);
+      setShowSubjectModal(false);
+    } catch (error) {
+      console.error("Subject submit error:", error);
+      alert(error.message || "Failed to save subject.");
+    }
   };
 
   /* =====================================================
      DELETE SUBJECT
      ===================================================== */
 
-  const handleDelete = (id) => {
-    const confirmDelete =
-      window.confirm(
-        "Are you sure you want to delete this subject?"
-      );
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this subject?"
+    );
 
     if (!confirmDelete) return;
 
-    setSubjects(
-      subjects.filter(
-        (item) =>
-          item.id !== id
-      )
-    );
+    try {
+      const response = await fetchWithAuth(`/subjects/${id}`, {
+        method: "DELETE",
+      });
 
-    setSyllabusData(
-      syllabusData.filter(
-        (item) =>
-          item.subjectId !== id
-      )
-    );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete subject");
+      }
 
-    if (
-      selectedSyllabus &&
-      selectedSyllabus.subjectId === id
-    ) {
-      setSelectedSyllabus(null);
+      alert("Subject deleted successfully!");
+      await loadSubjects();
+
+      if (selectedSyllabus && selectedSyllabus.subjectId === id) {
+        setSelectedSyllabus(null);
+      }
+    } catch (error) {
+      console.error("Subject delete error:", error);
+      alert(error.message || "Failed to delete subject.");
     }
   };
 

@@ -502,17 +502,18 @@
 /* TABLE ROW */
 
 .student-row {
-  min-width: 850px;
+  min-width: 880px;
 
   display: grid;
 
   grid-template-columns:
+    36px
     2fr
     1fr
     0.8fr
     1.35fr
     0.9fr
-    1.05fr;
+    1.25fr;
 
   align-items: center;
 

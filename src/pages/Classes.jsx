@@ -1,12 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import "../Style/Classes.css";
-
-// =========================================================
-// API
-// =========================================================
-
-const API_BASE_URL = "http://localhost:5000/api/classes";
+import { useAuth } from "../context/AuthContext";
 
 // =========================================================
 // DEFAULT SUBJECTS
@@ -99,6 +94,8 @@ function normalizeClass(item) {
 // =========================================================
 
 function Classes() {
+  const { fetchWithAuth } = useAuth();
+
   // =======================================================
   // STATES
   // =======================================================
@@ -147,9 +144,7 @@ function Classes() {
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        API_BASE_URL
-      );
+      const response = await fetchWithAuth("/classes");
 
       if (!response.ok) {
         throw new Error(
@@ -417,14 +412,10 @@ function Classes() {
       // =================================================
 
       if (editingId) {
-        const response = await fetch(
-          `${API_BASE_URL}/${editingId}`,
+        const response = await fetchWithAuth(
+          `/classes/${editingId}`,
           {
             method: "PUT",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
             body: JSON.stringify({
               className,
               section,
@@ -469,14 +460,10 @@ function Classes() {
       // CREATE
       // =================================================
 
-      const response = await fetch(
-        API_BASE_URL,
+      const response = await fetchWithAuth(
+        "/classes",
         {
           method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
           body: JSON.stringify({
             className,
             section,
@@ -542,8 +529,8 @@ function Classes() {
     try {
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/${id}`,
+      const response = await fetchWithAuth(
+        `/classes/${id}`,
         {
           method: "DELETE",
         }

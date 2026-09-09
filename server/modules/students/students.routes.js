@@ -8,25 +8,28 @@ import {
   removeStudent,
   studentStats,
 } from "./students.controller.js";
+import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// GET /api/students
-router.get("/", listStudents);
+router.use(authenticate);
 
 // GET /api/students/stats
-router.get("/stats", studentStats);
+router.get("/stats", authorizePermission("students.view"), studentStats);
+
+// GET /api/students
+router.get("/", authorizePermission("students.view"), listStudents);
 
 // GET /api/students/:id
-router.get("/:id", getStudent);
+router.get("/:id", authorizePermission("students.view"), getStudent);
 
 // POST /api/students
-router.post("/", addStudent);
+router.post("/", authorizePermission("students.create"), addStudent);
 
 // PUT /api/students/:id
-router.put("/:id", editStudent);
+router.put("/:id", authorizePermission("students.edit"), editStudent);
 
 // DELETE /api/students/:id
-router.delete("/:id", removeStudent);
+router.delete("/:id", authorizePermission("students.delete"), removeStudent);
 
 export default router;

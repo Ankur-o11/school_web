@@ -1,10 +1,4 @@
-// =====================================================
-// MPSA SCHOOL MANAGEMENT SYSTEM
-// SUBJECTS ROUTES
-// =====================================================
-
 import express from "express";
-
 import {
   create,
   getAll,
@@ -16,103 +10,20 @@ import {
   remove,
   stats,
 } from "./subjects.controller.js";
+import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
 
-const router =
-  express.Router();
+const router = express.Router();
 
-// =====================================================
-// STATISTICS
-// IMPORTANT: KEEP BEFORE /:id
-// =====================================================
+router.use(authenticate);
 
-router.get(
-  "/stats",
-  stats
-);
-
-// =====================================================
-// GET SUBJECTS BY CLASS
-//
-// Example:
-// /api/subjects/class/Class%205?section=A
-// =====================================================
-
-router.get(
-  "/class/:className",
-  getByClass
-);
-
-// =====================================================
-// GET ALL SUBJECTS
-//
-// /api/subjects
-// /api/subjects?className=Class%205
-// /api/subjects?section=A
-// /api/subjects?search=Hindi
-// /api/subjects?teacherId=123
-// =====================================================
-
-router.get(
-  "/",
-  getAll
-);
-
-// =====================================================
-// CREATE
-// =====================================================
-
-router.post(
-  "/",
-  create
-);
-
-// =====================================================
-// GET SYLLABUS
-//
-// /api/subjects/:id/syllabus
-// =====================================================
-
-router.get(
-  "/:id/syllabus",
-  getSyllabus
-);
-
-// =====================================================
-// UPDATE SYLLABUS
-//
-// PATCH /api/subjects/:id/syllabus
-// =====================================================
-
-router.patch(
-  "/:id/syllabus",
-  updateSubjectSyllabus
-);
-
-// =====================================================
-// GET ONE
-// =====================================================
-
-router.get(
-  "/:id",
-  getOne
-);
-
-// =====================================================
-// UPDATE
-// =====================================================
-
-router.put(
-  "/:id",
-  update
-);
-
-// =====================================================
-// DELETE
-// =====================================================
-
-router.delete(
-  "/:id",
-  remove
-);
+router.get("/stats", authorizePermission("subjects.view"), stats);
+router.get("/class/:className", authorizePermission("subjects.view"), getByClass);
+router.get("/", authorizePermission("subjects.view"), getAll);
+router.post("/", authorizePermission("subjects.manage"), create);
+router.get("/:id/syllabus", authorizePermission("subjects.view"), getSyllabus);
+router.patch("/:id/syllabus", authorizePermission("subjects.manage"), updateSubjectSyllabus);
+router.get("/:id", authorizePermission("subjects.view"), getOne);
+router.put("/:id", authorizePermission("subjects.manage"), update);
+router.delete("/:id", authorizePermission("subjects.manage"), remove);
 
 export default router;

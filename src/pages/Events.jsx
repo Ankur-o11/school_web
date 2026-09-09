@@ -1,139 +1,206 @@
-import "../Style/Events.css";
+import { useState } from "react";
+import PageHeader from "../components/ui/PageHeader";
+import StatCard, { StatGrid } from "../components/ui/StatCard";
+import DataTable from "../components/ui/DataTable";
+import StatusBadge from "../components/ui/StatusBadge";
+import ActionMenu from "../components/ui/ActionMenu";
+import Modal from "../components/ui/Modal";
+import "../Style/ui.css";
 
-function Events() {
+const INITIAL_EVENTS = [
+  {
+    id: "EVT-01",
+    title: "Annual Sports Day 2026",
+    category: "Sports",
+    date: "2026-09-25",
+    time: "09:00 AM - 04:00 PM",
+    venue: "Main Athletic Ground",
+    targetAudience: "All Students",
+    status: "Upcoming"
+  },
+  {
+    id: "EVT-02",
+    title: "Inter-School Science Exhibition",
+    category: "Academic",
+    date: "2026-10-05",
+    time: "10:00 AM - 02:00 PM",
+    venue: "Science Auditorium",
+    targetAudience: "Classes 8-12",
+    status: "Upcoming"
+  },
+  {
+    id: "EVT-03",
+    title: "Independence Day Cultural Function",
+    category: "Cultural",
+    date: "2026-08-15",
+    time: "08:00 AM - 12:00 PM",
+    venue: "School Amphitheatre",
+    targetAudience: "School Wide",
+    status: "Completed"
+  }
+];
+
+export function Events() {
+  const [events, setEvents] = useState(INITIAL_EVENTS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "Academic",
+    date: "",
+    time: "10:00 AM",
+    venue: "School Auditorium",
+    targetAudience: "All Students"
+  });
+
+  const handleAddEvent = (e) => {
+    e.preventDefault();
+    const newEvt = {
+      id: `EVT-0${events.length + 1}`,
+      title: formData.title,
+      category: formData.category,
+      date: formData.date || "2026-10-15",
+      time: formData.time,
+      venue: formData.venue,
+      targetAudience: formData.targetAudience,
+      status: "Upcoming"
+    };
+    setEvents([newEvt, ...events]);
+    setIsModalOpen(false);
+    setFormData({ title: "", category: "Academic", date: "", time: "10:00 AM", venue: "School Auditorium", targetAudience: "All Students" });
+  };
+
+  const columns = [
+    { header: "Event Title", accessor: "title", render: (row) => <strong>{row.title}</strong> },
+    { header: "Category", accessor: "category", render: (row) => <span className="ui-badge ui-badge-info">{row.category}</span> },
+    { header: "Date & Time", accessor: "date", render: (row) => `${row.date} • ${row.time}` },
+    { header: "Venue / Location", accessor: "venue" },
+    { header: "Audience", accessor: "targetAudience" },
+    { header: "Status", accessor: "status", render: (row) => <StatusBadge status={row.status} /> },
+    {
+      header: "Actions",
+      accessor: "actions",
+      render: (row) => (
+        <ActionMenu
+          actions={[
+            { label: "View Details", icon: "👁️", onClick: () => alert(`Event: ${row.title}`) },
+            { label: "Delete Event", icon: "🗑️", danger: true, onClick: () => setEvents(events.filter((e) => e.id !== row.id)) }
+          ]}
+        />
+      )
+    }
+  ];
+
   return (
-    <div className="events-page">
+    <div style={{ padding: "24px" }}>
+      <PageHeader
+        breadcrumb="Activities"
+        title="School Events & Programs"
+        description="Schedule, manage, and announce academic, cultural, and sports events."
+        icon="🏆"
+        primaryAction={{
+          label: "Add New Event",
+          icon: "+",
+          onClick: () => setIsModalOpen(true)
+        }}
+      />
 
-      <div className="events-header">
-        <div>
-          <h1>🏆 Events & Activities</h1>
-          <p>
-            Manage school events, activities and upcoming programs.
-          </p>
-        </div>
+      <StatGrid>
+        <StatCard title="Total Events Scheduled" value={events.length} icon="🏆" />
+        <StatCard title="Upcoming Programs" value={events.filter((e) => e.status === "Upcoming").length} icon="📅" />
+        <StatCard title="Completed Events" value={events.filter((e) => e.status === "Completed").length} icon="✅" />
+        <StatCard title="Sports & Cultural" value={events.filter((e) => e.category !== "Academic").length} icon="🎨" />
+      </StatGrid>
 
-        <button className="event-add-btn">
-          + Add Event
-        </button>
-      </div>
+      <DataTable
+        columns={columns}
+        data={events}
+        searchPlaceholder="Search event title, venue, category..."
+      />
 
-
-      <div className="event-stats">
-
-        <div className="event-stat-card">
-          <div className="event-stat-icon">🏆</div>
-          <div>
-            <span>Total Events</span>
-            <strong>24</strong>
-          </div>
-        </div>
-
-        <div className="event-stat-card">
-          <div className="event-stat-icon">📅</div>
-          <div>
-            <span>Upcoming</span>
-            <strong>8</strong>
-          </div>
-        </div>
-
-        <div className="event-stat-card">
-          <div className="event-stat-icon">✅</div>
-          <div>
-            <span>Completed</span>
-            <strong>16</strong>
-          </div>
-        </div>
-
-      </div>
-
-
-      <div className="events-card">
-
-        <div className="events-card-header">
-          <div>
-            <h2>School Events</h2>
-            <p>Upcoming and recent school activities</p>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Schedule School Event"
+        footer={
+          <>
+            <button className="ui-btn ui-btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <button className="ui-btn ui-btn-primary" onClick={handleAddEvent}>Schedule Event</button>
+          </>
+        }
+      >
+        <form onSubmit={handleAddEvent}>
+          <div className="ui-form-group">
+            <label>Event Name *</label>
+            <input
+              type="text"
+              className="ui-form-control"
+              placeholder="e.g. Annual Art & Craft Competition"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
           </div>
 
-          <input
-            type="text"
-            placeholder="Search event..."
-            className="event-search"
-          />
-        </div>
-
-
-        <div className="event-list">
-
-          <div className="event-item">
-
-            <div className="event-date">
-              <strong>25</strong>
-              <span>AUG</span>
+          <div className="ui-form-row">
+            <div className="ui-form-group">
+              <label>Event Category</label>
+              <select
+                className="ui-form-control"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              >
+                <option value="Academic">Academic</option>
+                <option value="Sports">Sports</option>
+                <option value="Cultural">Cultural</option>
+                <option value="Celebration">Celebration</option>
+              </select>
             </div>
-
-            <div className="event-details">
-              <h3>Annual Sports Day</h3>
-              <p>
-                Annual sports competition for all classes.
-              </p>
-              <span>📍 School Ground • 9:00 AM</span>
+            <div className="ui-form-group">
+              <label>Target Audience</label>
+              <input
+                type="text"
+                className="ui-form-control"
+                value={formData.targetAudience}
+                onChange={(e) => setFormData({ ...formData, targetAudience: e.target.value })}
+              />
             </div>
-
-            <span className="event-status upcoming">
-              Upcoming
-            </span>
-
           </div>
 
-
-          <div className="event-item">
-
-            <div className="event-date">
-              <strong>30</strong>
-              <span>AUG</span>
+          <div className="ui-form-row">
+            <div className="ui-form-group">
+              <label>Date *</label>
+              <input
+                type="date"
+                className="ui-form-control"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
             </div>
-
-            <div className="event-details">
-              <h3>Science Exhibition</h3>
-              <p>
-                Students will present their science projects.
-              </p>
-              <span>📍 Science Block • 10:00 AM</span>
+            <div className="ui-form-group">
+              <label>Time Schedule</label>
+              <input
+                type="text"
+                className="ui-form-control"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+              />
             </div>
-
-            <span className="event-status upcoming">
-              Upcoming
-            </span>
-
           </div>
 
-
-          <div className="event-item">
-
-            <div className="event-date">
-              <strong>15</strong>
-              <span>AUG</span>
-            </div>
-
-            <div className="event-details">
-              <h3>Independence Day Celebration</h3>
-              <p>
-                Cultural programs and flag hoisting ceremony.
-              </p>
-              <span>📍 School Auditorium • 8:00 AM</span>
-            </div>
-
-            <span className="event-status completed">
-              Completed
-            </span>
-
+          <div className="ui-form-group">
+            <label>Venue / Location</label>
+            <input
+              type="text"
+              className="ui-form-control"
+              placeholder="e.g. Main Auditorium, Ground"
+              value={formData.venue}
+              onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+            />
           </div>
-
-        </div>
-
-      </div>
-
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -1,45 +1,11 @@
-// =====================================================
-// MPSA SCHOOL MANAGEMENT SYSTEM
-// ACTIVITY LOG ROUTES
-// =====================================================
-
 import express from "express";
-
-import {
-  getAll,
-  getOne,
-  create,
-  remove,
-} from "./activityLog.controller.js";
+import { getActivityLogs } from "./activityLog.controller.js";
+import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// =====================================================
-// GET ALL ACTIVITY LOGS
-// GET /api/activity-logs
-// =====================================================
+router.use(authenticate);
 
-router.get("/", getAll);
-
-// =====================================================
-// GET SINGLE ACTIVITY LOG
-// GET /api/activity-logs/:id
-// =====================================================
-
-router.get("/:id", getOne);
-
-// =====================================================
-// CREATE ACTIVITY LOG
-// POST /api/activity-logs
-// =====================================================
-
-router.post("/", create);
-
-// =====================================================
-// DELETE ACTIVITY LOG
-// DELETE /api/activity-logs/:id
-// =====================================================
-
-router.delete("/:id", remove);
+router.get("/", authorizePermission("settings.manage"), getActivityLogs);
 
 export default router;

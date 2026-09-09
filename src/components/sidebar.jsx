@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../Style/sidebar.css";
 
-function Sidebar() {
+function Sidebar({ isOpen = false, onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, hasPermission } = useAuth();
@@ -45,7 +45,13 @@ function Sidebar() {
   // Filter items based on permission
   const menuItems = allMenuItems.filter((item) => hasPermission(item.permission));
 
+  const handleNav = (path) => {
+    navigate(path);
+    if (onClose) onClose();
+  };
+
   const handleLogout = async () => {
+    if (onClose) onClose();
     await logout();
     navigate("/login");
   };
@@ -56,76 +62,87 @@ function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <>
+      {/* MOBILE OVERLAY MASK */}
+      <div
+        className={`sidebar-overlay ${isOpen ? "open" : ""}`}
+        onClick={onClose}
+      />
 
-      {/* BRAND */}
-      <div className="brand">
-        <div className="logo">M</div>
-        <div className="brand-text">
-          <h2>MPSA</h2>
-          <span>School ERP</span>
+      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+        {/* BRAND */}
+        <div className="brand">
+          <div className="logo">M</div>
+          <div className="brand-text">
+            <h2>MPSA</h2>
+            <span>School ERP</span>
+          </div>
+          {onClose && (
+            <button className="sidebar-close-btn" type="button" onClick={onClose}>
+              ✕
+            </button>
+          )}
         </div>
-      </div>
 
-      {/* MENU */}
-      <p className="menu-title">MAIN MENU</p>
+        {/* MENU */}
+        <p className="menu-title">MAIN MENU</p>
 
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => {
-          const active =
-            item.path === "/"
-              ? location.pathname === "/"
-              : location.pathname === item.path;
+        <nav className="sidebar-nav">
+          {menuItems.map((item) => {
+            const active =
+              item.path === "/"
+                ? location.pathname === "/"
+                : location.pathname === item.path;
 
-          return (
-            <div
-              key={item.path}
-              className={
-                active
-                  ? "sidebar-link active-link"
-                  : "sidebar-link"
-              }
-              onClick={() => navigate(item.path)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  navigate(item.path);
+            return (
+              <div
+                key={item.path}
+                className={
+                  active
+                    ? "sidebar-link active-link"
+                    : "sidebar-link"
                 }
-              }}
-            >
-              <span className="menu-icon">{item.icon}</span>
-              <span>{item.label}</span>
+                onClick={() => handleNav(item.path)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleNav(item.path);
+                  }
+                }}
+              >
+                <span className="menu-icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* BOTTOM */}
+        <div className="sidebar-bottom">
+          <button
+            className="sidebar-button logout-btn"
+            type="button"
+            onClick={handleLogout}
+          >
+            <span className="menu-icon">🚪</span>
+            <span>Logout</span>
+          </button>
+
+          <div className="admin-profile">
+            <div className="admin-avatar">{getInitial()}</div>
+            <div style={{ overflow: "hidden" }}>
+              <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                {user?.name || "School User"}
+              </strong>
+              <span style={{ color: "#3b82f6", fontWeight: "600", fontSize: "12px" }}>
+                {user?.role || "User"}
+              </span>
             </div>
-          );
-        })}
-      </nav>
-
-      {/* BOTTOM */}
-      <div className="sidebar-bottom">
-        <button
-          className="sidebar-button logout-btn"
-          type="button"
-          onClick={handleLogout}
-        >
-          <span className="menu-icon">🚪</span>
-          <span>Logout</span>
-        </button>
-
-        <div className="admin-profile">
-          <div className="admin-avatar">{getInitial()}</div>
-          <div style={{ overflow: "hidden" }}>
-            <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-              {user?.name || "School User"}
-            </strong>
-            <span style={{ color: "#3b82f6", fontWeight: "600", fontSize: "12px" }}>
-              {user?.role || "User"}
-            </span>
           </div>
         </div>
-      </div>
-
-    </aside>
+      </aside>
+    </>
   );
 }
 

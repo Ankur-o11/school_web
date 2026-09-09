@@ -46,12 +46,34 @@ import Library from "./pages/Library";
 import HealthRecords from "./pages/HealthRecords";
 import Notifications from "./pages/Notifications";
 
+import { useState } from "react";
 import "./App.css";
 
 function AppLayout() {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   return (
     <div className="app">
-      <Sidebar />
+      <header className="mobile-app-header">
+        <div className="mobile-brand">
+          <div className="mobile-brand-logo">M</div>
+          <div className="mobile-brand-title">
+            <h3>MPSA</h3>
+            <span>School ERP</span>
+          </div>
+        </div>
+        <button
+          className="hamburger-btn"
+          type="button"
+          onClick={() => setIsMobileOpen((prev) => !prev)}
+          aria-label="Toggle mobile menu"
+        >
+          ☰
+        </button>
+      </header>
+
+      <Sidebar isOpen={isMobileOpen} onClose={() => setIsMobileOpen(false)} />
+
       <main className="main-content">
         <Routes>
           <Route

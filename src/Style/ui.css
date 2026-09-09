@@ -476,3 +476,51 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
+
+/* Responsive UI Media Queries */
+@media (max-width: 640px) {
+  .ui-page-header {
+    padding: 16px;
+  }
+
+  .ui-page-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ui-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .ui-search-box {
+    width: 100%;
+  }
+
+  .ui-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ui-filter-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .ui-modal {
+    max-width: 95vw;
+    margin: 10px;
+  }
+
+  .ui-modal-body,
+  .ui-modal-header,
+  .ui-modal-footer {
+    padding: 14px;
+  }
+
+  .ui-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+

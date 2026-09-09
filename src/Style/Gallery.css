@@ -814,4 +814,16 @@
   .gallery-filter-group {
     width: 100%;
   }
+
+  .video-player-container {
+    min-height: 220px;
+  }
+
+  .video-iframe-player, .video-html5-player {
+    height: 240px;
+  }
+
+  .lightbox-dialog {
+    max-width: 95vw;
+  }
 }

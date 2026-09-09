@@ -260,3 +260,40 @@
   color: #94a3b8;
   cursor: not-allowed;
 }
+
+@media (max-width: 480px) {
+  .wa-modal-overlay {
+    padding: 10px;
+  }
+
+  .wa-modal-card {
+    max-width: 95vw;
+    border-radius: 12px;
+  }
+
+  .wa-modal-header {
+    padding: 14px 16px;
+  }
+
+  .wa-modal-body {
+    padding: 16px 14px;
+  }
+
+  .wa-student-pill {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .wa-modal-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .wa-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

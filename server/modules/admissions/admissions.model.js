@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 
 export const ADMISSIONS_COLLECTION = "admissions";
 
@@ -12,12 +13,22 @@ export function toObjectId(id) {
   }
 }
 
+export function generateTrackingToken() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 export function createAdmissionDocument(input = {}) {
   const now = new Date();
+  const year = now.getFullYear();
   const applicationNo =
     input.applicationNo ||
-    input.id ||
-    `ADM-${now.getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    input.applicationId ||
+    `MPSA-${year}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  const trackingToken = input.trackingToken || generateTrackingToken();
+  const source = ["online", "admin", "walk-in"].includes(input.source)
+    ? input.source
+    : "admin";
 
   const defaultChecklist = {
     aadhaar: { status: input.checklist?.aadhaar?.status || "Pending", required: true },
@@ -31,16 +42,29 @@ export function createAdmissionDocument(input = {}) {
 
   return {
     applicationNo,
+    applicationId: applicationNo,
+    trackingToken,
+    source,
     applicantName: input.applicantName || "",
+    gender: input.gender || "Male",
+    dob: input.dob || "",
     appliedClass: input.appliedClass || "Class 1",
+    academicSession: input.academicSession || `${year}-${year + 1}`,
     parentName: input.parentName || "",
     parentPhone: input.parentPhone || "",
-    appliedDate: input.appliedDate || now.toISOString().split("T")[0],
+    email: input.email || "",
+    address: input.address || "",
+    city: input.city || "",
+    state: input.state || "",
+    pincode: input.pincode || "",
     prevSchool: input.prevSchool || "N/A",
-    status: input.status || (pendingItems.length > 0 ? "Pending Checklist" : "Submitted"),
+    appliedDate: input.appliedDate || now.toISOString().split("T")[0],
+    status: input.status || (pendingItems.length > 0 ? "Under Review" : "Submitted"),
     checklist: defaultChecklist,
     pendingItems,
     hasPendingItems: pendingItems.length > 0,
+    correctionRequired: Boolean(input.correctionRequired),
+    correctionNotes: input.correctionNotes || "",
     createdStudentId: input.createdStudentId || null,
     createdAdmissionNo: input.createdAdmissionNo || null,
     createdAt: input.createdAt ? new Date(input.createdAt) : now,
@@ -50,19 +74,19 @@ export function createAdmissionDocument(input = {}) {
 
 export function computePendingItems(checklist = {}) {
   const pending = [];
-  if (checklist.aadhaar?.required && checklist.aadhaar?.status !== "Verified") {
+  if (checklist.aadhaar?.required && checklist.aadhaar?.status !== "Verified" && checklist.aadhaar?.status !== true) {
     pending.push("Aadhaar Card");
   }
-  if (checklist.birthCertificate?.required && checklist.birthCertificate?.status !== "Verified") {
+  if (checklist.birthCertificate?.required && checklist.birthCertificate?.status !== "Verified" && checklist.birthCertificate?.status !== true) {
     pending.push("Birth Certificate");
   }
-  if (checklist.photo?.required && checklist.photo?.status !== "Verified") {
+  if (checklist.photo?.required && checklist.photo?.status !== "Verified" && checklist.photo?.status !== true) {
     pending.push("Passport Photo");
   }
-  if (checklist.transferCertificate?.required && checklist.transferCertificate?.status !== "Verified") {
+  if (checklist.transferCertificate?.required && checklist.transferCertificate?.status !== "Verified" && checklist.transferCertificate?.status !== true) {
     pending.push("Transfer Certificate (TC)");
   }
-  if (checklist.registrationFee?.required && checklist.registrationFee?.status !== "Paid") {
+  if (checklist.registrationFee?.required && checklist.registrationFee?.status !== "Paid" && checklist.registrationFee?.status !== true) {
     pending.push("Registration Fee (₹500)");
   }
   return pending;
@@ -73,17 +97,30 @@ export function sanitizeAdmission(doc) {
   const pendingItems = computePendingItems(doc.checklist || {});
   return {
     id: doc._id ? doc._id.toString() : doc.id,
-    applicationNo: doc.applicationNo || doc.id,
+    applicationNo: doc.applicationNo || doc.applicationId || doc.id,
+    applicationId: doc.applicationNo || doc.applicationId || doc.id,
+    trackingToken: doc.trackingToken || "",
+    source: doc.source || "admin",
     applicantName: doc.applicantName || "",
+    gender: doc.gender || "Male",
+    dob: doc.dob || "",
     appliedClass: doc.appliedClass || "",
+    academicSession: doc.academicSession || "",
     parentName: doc.parentName || "",
     parentPhone: doc.parentPhone || "",
+    email: doc.email || "",
+    address: doc.address || "",
+    city: doc.city || "",
+    state: doc.state || "",
+    pincode: doc.pincode || "",
     appliedDate: doc.appliedDate || "",
     prevSchool: doc.prevSchool || "N/A",
-    status: doc.status || (pendingItems.length > 0 ? "Pending Checklist" : "Submitted"),
+    status: doc.status || (pendingItems.length > 0 ? "Under Review" : "Submitted"),
     checklist: doc.checklist || {},
     pendingItems,
     hasPendingItems: pendingItems.length > 0,
+    correctionRequired: Boolean(doc.correctionRequired),
+    correctionNotes: doc.correctionNotes || "",
     createdStudentId: doc.createdStudentId || null,
     createdAdmissionNo: doc.createdAdmissionNo || null,
     createdAt: doc.createdAt,

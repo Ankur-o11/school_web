@@ -1,7 +1,11 @@
 import {
   getAllAdmissions,
   getAdmissionById,
+  getAdmissionByTrackingToken,
   createAdmission,
+  createOnlineAdmission,
+  updateOnlineApplicationByToken,
+  requestCorrection,
   updateChecklist,
   updateAdmissionStatus,
   confirmAndCreateStudent,
@@ -55,6 +59,131 @@ export async function getPublicAdmission(req, res) {
   }
 }
 
+// GET /api/admissions/track/:token
+export async function getPublicAdmissionByToken(req, res) {
+  try {
+    const { token } = req.params;
+    let admission = await getAdmissionByTrackingToken(token);
+    if (!admission) {
+      admission = await getAdmissionById(token);
+    }
+
+    if (!admission) {
+      return res.status(404).json({
+        success: false,
+        message: "Application record not found for the provided token",
+      });
+    }
+
+    // Mask sensitive details for public parent view
+    const publicView = {
+      applicationId: admission.applicationId,
+      applicationNo: admission.applicationNo,
+      trackingToken: admission.trackingToken,
+      applicantName: admission.applicantName,
+      appliedClass: admission.appliedClass,
+      academicSession: admission.academicSession,
+      parentName: admission.parentName,
+      appliedDate: admission.appliedDate,
+      status: admission.status,
+      checklist: admission.checklist,
+      pendingItems: admission.pendingItems,
+      correctionRequired: admission.correctionRequired,
+      correctionNotes: admission.correctionNotes,
+      createdStudentId: admission.createdStudentId,
+      createdAdmissionNo: admission.createdAdmissionNo,
+      // Allowed correction fields
+      gender: admission.gender,
+      dob: admission.dob,
+      parentPhone: admission.parentPhone,
+      email: admission.email,
+      address: admission.address,
+      city: admission.city,
+      state: admission.state,
+      pincode: admission.pincode,
+      prevSchool: admission.prevSchool,
+    };
+
+    res.json({
+      success: true,
+      data: publicView,
+      admission: publicView,
+    });
+  } catch (error) {
+    console.error("getPublicAdmissionByToken:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to load application details",
+      error: error.message,
+    });
+  }
+}
+
+// POST /api/admissions/online (Public Self-Registration)
+export async function registerOnlineAdmission(req, res) {
+  try {
+    const admission = await createOnlineAdmission(req.body);
+    const host = req.headers.host || "school-web-rouge-nine.vercel.app";
+    const protocol = req.headers["x-forwarded-proto"] || "https";
+    const trackingLink = `${protocol}://${host}/admission-status/${admission.trackingToken}`;
+
+    res.status(201).json({
+      success: true,
+      message: "Online admission application submitted successfully!",
+      data: admission,
+      admission,
+      trackingLink,
+    });
+  } catch (error) {
+    console.error("registerOnlineAdmission:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to submit online admission application",
+      error: error.message,
+    });
+  }
+}
+
+// PATCH /api/admissions/track/:token (Public parent correction submission)
+export async function updateOnlineAdmission(req, res) {
+  try {
+    const { token } = req.params;
+    const admission = await updateOnlineApplicationByToken(token, req.body);
+    res.json({
+      success: true,
+      message: "Application details updated successfully!",
+      data: admission,
+      admission,
+    });
+  } catch (error) {
+    console.error("updateOnlineAdmission:", error);
+    res.status(400).json({
+      success: false,
+      message: error.message || "Failed to update application",
+    });
+  }
+}
+
+// PATCH /api/admissions/:id/request-correction (Admin action)
+export async function handleRequestCorrection(req, res) {
+  try {
+    const { notes } = req.body;
+    const admission = await requestCorrection(req.params.id, notes);
+    res.json({
+      success: true,
+      message: "Correction request sent to applicant",
+      data: admission,
+      admission,
+    });
+  } catch (error) {
+    console.error("handleRequestCorrection:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to request correction",
+    });
+  }
+}
+
 // GET /api/admissions/:id
 export async function getAdmission(req, res) {
   try {
@@ -69,6 +198,7 @@ export async function getAdmission(req, res) {
     res.json({
       success: true,
       admission,
+      data: admission,
     });
   } catch (error) {
     console.error("getAdmission:", error);
@@ -86,7 +216,7 @@ export async function addAdmission(req, res) {
     const admission = await createAdmission(req.body);
     const host = req.headers.host || "school-web-rouge-nine.vercel.app";
     const protocol = req.headers["x-forwarded-proto"] || "https";
-    const parentTrackingLink = `${protocol}://${host}/admission-status/${admission.applicationNo}`;
+    const parentTrackingLink = `${protocol}://${host}/admission-status/${admission.trackingToken || admission.applicationNo}`;
 
     res.status(201).json({
       success: true,
@@ -105,10 +235,10 @@ export async function addAdmission(req, res) {
   }
 }
 
-// PUT /api/admissions/:id/checklist
+// PUT/PATCH /api/admissions/:id/checklist
 export async function updateAdmissionChecklist(req, res) {
   try {
-    const admission = await updateChecklist(req.params.id, req.body);
+    const admission = await updateChecklist(req.params.id, req.body.checklist || req.body);
     res.json({
       success: true,
       message: "Admission checklist updated",
@@ -124,7 +254,7 @@ export async function updateAdmissionChecklist(req, res) {
   }
 }
 
-// PUT /api/admissions/:id/status
+// PUT/PATCH /api/admissions/:id/status
 export async function changeAdmissionStatus(req, res) {
   try {
     const { status } = req.body;
@@ -167,6 +297,7 @@ export async function confirmAdmission(req, res) {
       success: true,
       message: "Admission confirmed and Student automatically created!",
       ...result,
+      data: result.admission,
     });
   } catch (error) {
     console.error("confirmAdmission:", error);
@@ -177,7 +308,7 @@ export async function confirmAdmission(req, res) {
   }
 }
 
-// POST /api/admissions/:id/whatsapp-reminder
+// POST/GET /api/admissions/:id/whatsapp-reminder
 export async function sendWhatsAppReminder(req, res) {
   try {
     const admission = await getAdmissionById(req.params.id);
@@ -193,7 +324,7 @@ export async function sendWhatsAppReminder(req, res) {
       : "None";
 
     const host = req.headers.host || "school-web-rouge-nine.vercel.app";
-    const trackingLink = `https://${host}/admission-status/${admission.applicationNo}`;
+    const trackingLink = `https://${host}/admission-status/${admission.trackingToken || admission.applicationNo}`;
 
     const message = `Dear ${admission.parentName}, greetings from MPSA School! 🎓\n\nRegarding ${admission.applicantName}'s Admission (${admission.applicationNo}):\n\n📌 Pending Items: ${pendingList}\n\nPlease submit pending documents/fees to complete the admission.\n\n🔗 View Admission Status & Upload: ${trackingLink}\n\nThank you!\nMPSA School Admissions`;
 

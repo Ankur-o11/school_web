@@ -8,6 +8,7 @@ import Sidebar from "./components/sidebar";
 ================================ */
 import Login from "./pages/Login";
 import PublicAdmissionStatus from "./pages/PublicAdmissionStatus";
+import PublicOnlineAdmission from "./pages/PublicOnlineAdmission";
 
 /* ================================
    EXISTING PAGES
@@ -329,6 +330,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/online-admission" element={<PublicOnlineAdmission />} />
           <Route path="/admission-status/:id" element={<PublicAdmissionStatus />} />
           <Route path="/*" element={<AppLayout />} />
         </Routes>

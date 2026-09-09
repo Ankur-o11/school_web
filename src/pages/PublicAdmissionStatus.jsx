@@ -8,15 +8,41 @@ export default function PublicAdmissionStatus() {
   const [admission, setAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updateMsg, setUpdateMsg] = useState(null);
+
+  const [editForm, setEditForm] = useState({
+    applicantName: "",
+    parentName: "",
+    parentPhone: "",
+    email: "",
+    address: "",
+    prevSchool: "",
+  });
 
   const fetchStatus = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE_URL}/admissions/public/${encodeURIComponent(id)}`);
-      const data = await res.json();
+      let res = await fetch(`${API_BASE_URL}/admissions/track/${encodeURIComponent(id)}`);
+      let data = await res.json();
+      
+      if (!data.success) {
+        res = await fetch(`${API_BASE_URL}/admissions/public/${encodeURIComponent(id)}`);
+        data = await res.json();
+      }
+
       if (data.success) {
-        setAdmission(data.data || data.admission);
+        const item = data.data || data.admission;
+        setAdmission(item);
+        setEditForm({
+          applicantName: item.applicantName || "",
+          parentName: item.parentName || "",
+          parentPhone: item.parentPhone || "",
+          email: item.email || "",
+          address: item.address || "",
+          prevSchool: item.prevSchool || "",
+        });
       } else {
         setError(data.message || "Application record not found.");
       }
@@ -34,10 +60,37 @@ export default function PublicAdmissionStatus() {
     }
   }, [id]);
 
+  const handleCorrectionSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const token = admission.trackingToken || id;
+      const res = await fetch(`${API_BASE_URL}/admissions/track/${encodeURIComponent(token)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setUpdateMsg("🎉 Application details updated successfully! Under review by administration.");
+        setIsEditing(false);
+        fetchStatus();
+      } else {
+        alert(data.message || "Failed to update details.");
+      }
+    } catch (err) {
+      console.error("Correction submit error:", err);
+      alert("Error updating application.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const steps = [
     { label: "Submitted", status: "Submitted" },
-    { label: "Documents & Fees", status: "Document Verification" },
-    { label: "Under Review", status: "Under Review" },
+    { label: "Documents & Fees", status: "Under Review" },
+    { label: "Review & Correction", status: "Correction Required" },
     { label: "Confirmed", status: "Confirmed" },
   ];
 
@@ -45,10 +98,10 @@ export default function PublicAdmissionStatus() {
     if (!admission) return "pending";
     const current = admission.status;
     if (current === "Rejected") return stepStatus === "Submitted" ? "completed" : "rejected";
-    
-    const order = ["Submitted", "Pending", "Under Review", "Confirmed"];
+
+    const order = ["Submitted", "Under Review", "Correction Required", "Ready for Confirmation", "Confirmed"];
     const normalizedCurrent = current === "Approved" ? "Confirmed" : current;
-    
+
     if (normalizedCurrent === stepStatus) return "active";
     if (order.indexOf(normalizedCurrent) > order.indexOf(stepStatus)) return "completed";
     return "pending";
@@ -78,11 +131,11 @@ export default function PublicAdmissionStatus() {
         }}>
           <div style={{ fontSize: "36px", marginBottom: "8px" }}>🎓</div>
           <h1 style={{ margin: 0, fontSize: "22px", fontWeight: "700" }}>MPSA Public School</h1>
-          <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "14px" }}>Admission Application Status</p>
+          <p style={{ margin: "4px 0 0 0", opacity: 0.9, fontSize: "14px" }}>Admission Application Status Tracker</p>
         </div>
 
         <div style={{ padding: "24px 20px" }}>
-          {loading && (
+          {loading && !admission && (
             <div style={{ textAlign: "center", padding: "40px 0" }}>
               <div className="spinner" style={{ margin: "0 auto 16px" }}></div>
               <p style={{ color: "#64748b" }}>Fetching application details...</p>
@@ -99,19 +152,28 @@ export default function PublicAdmissionStatus() {
               textAlign: "center"
             }}>
               <p style={{ margin: "0 0 12px 0", fontWeight: "600" }}>⚠️ {error}</p>
-              <button
-                onClick={fetchStatus}
-                className="ui-btn ui-btn-primary"
-                style={{ fontSize: "13px" }}
-              >
+              <button onClick={fetchStatus} className="ui-btn ui-btn-primary" style={{ fontSize: "13px" }}>
                 Retry
               </button>
             </div>
           )}
 
-          {admission && !loading && (
+          {updateMsg && (
+            <div style={{
+              backgroundColor: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              color: "#166534",
+              padding: "12px 16px",
+              borderRadius: "8px",
+              marginBottom: "16px"
+            }}>
+              {updateMsg}
+            </div>
+          )}
+
+          {admission && (
             <>
-              {/* Application Details Summary */}
+              {/* Application Summary Card */}
               <div style={{
                 backgroundColor: "#f8fafc",
                 borderRadius: "12px",
@@ -120,10 +182,21 @@ export default function PublicAdmissionStatus() {
                 marginBottom: "24px"
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
-                  <span style={{ fontSize: "13px", color: "#64748b" }}>Application ID</span>
-                  <span style={{ fontWeight: "700", fontSize: "15px", color: "#1e293b" }}>{admission.id}</span>
+                  <div>
+                    <span style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>Application ID (Immutable)</span>
+                    <p style={{ margin: "2px 0 0 0", fontWeight: "800", fontSize: "16px", color: "#1e3a8a" }}>
+                      {admission.applicationId || admission.applicationNo}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: "700" }}>Source</span>
+                    <p style={{ margin: "2px 0 0 0", fontWeight: "600", fontSize: "13px", color: "#475569" }}>
+                      {admission.source ? admission.source.toUpperCase() : "ADMIN"}
+                    </p>
+                  </div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "12px" }}>
                   <div>
                     <span style={{ fontSize: "12px", color: "#64748b" }}>Applicant Name</span>
                     <p style={{ margin: "2px 0 0 0", fontWeight: "600", color: "#0f172a" }}>{admission.applicantName}</p>
@@ -168,8 +241,7 @@ export default function PublicAdmissionStatus() {
                           justifyContent: "center",
                           fontWeight: "700",
                           fontSize: "14px",
-                          margin: "0 auto 8px",
-                          transition: "all 0.3s ease"
+                          margin: "0 auto 8px"
                         }}>
                           {st === "completed" ? "✓" : idx + 1}
                         </div>
@@ -182,8 +254,8 @@ export default function PublicAdmissionStatus() {
                 </div>
               </div>
 
-              {/* Pending Items Alert Box */}
-              {admission.pendingItems && admission.pendingItems.length > 0 && (
+              {/* Correction Required Warning & Form */}
+              {admission.correctionRequired && (
                 <div style={{
                   backgroundColor: "#fffbebf5",
                   border: "1px solid #fde68a",
@@ -192,15 +264,96 @@ export default function PublicAdmissionStatus() {
                   marginBottom: "24px"
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                    <span style={{ fontSize: "18px" }}>⚠️</span>
+                    <span style={{ fontSize: "20px" }}>⚠️</span>
                     <h4 style={{ margin: 0, fontSize: "15px", color: "#92400e", fontWeight: "700" }}>
-                      Pending Action Required ({admission.pendingItems.length} items missing)
+                      Correction Required by School Admin
                     </h4>
                   </div>
-                  <p style={{ margin: "0 0 10px 0", fontSize: "13px", color: "#78350f" }}>
-                    Please submit or pay the following pending verification requirements to complete admission:
+                  <p style={{ margin: "0 0 12px 0", fontSize: "13px", color: "#78350f", backgroundColor: "#fef3c7", padding: "10px", borderRadius: "6px" }}>
+                    <strong>Admin Note:</strong> {admission.correctionNotes || "Please review and update application details."}
                   </p>
-                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#92400e" }}>
+
+                  {!isEditing ? (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="ui-btn ui-btn-primary"
+                      style={{ backgroundColor: "#d97706", fontSize: "13px" }}
+                    >
+                      ✏️ Edit & Resubmit Application
+                    </button>
+                  ) : (
+                    <form onSubmit={handleCorrectionSubmit} style={{ marginTop: "12px" }}>
+                      <div className="ui-form-row">
+                        <div className="ui-form-group">
+                          <label>Applicant Name</label>
+                          <input
+                            type="text"
+                            className="ui-form-control"
+                            value={editForm.applicantName}
+                            onChange={(e) => setEditForm({ ...editForm, applicantName: e.target.value })}
+                          />
+                        </div>
+                        <div className="ui-form-group">
+                          <label>Parent Name</label>
+                          <input
+                            type="text"
+                            className="ui-form-control"
+                            value={editForm.parentName}
+                            onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="ui-form-row">
+                        <div className="ui-form-group">
+                          <label>Parent Mobile</label>
+                          <input
+                            type="text"
+                            className="ui-form-control"
+                            value={editForm.parentPhone}
+                            onChange={(e) => setEditForm({ ...editForm, parentPhone: e.target.value })}
+                          />
+                        </div>
+                        <div className="ui-form-group">
+                          <label>Email</label>
+                          <input
+                            type="email"
+                            className="ui-form-control"
+                            value={editForm.email}
+                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="ui-form-group">
+                        <label>Residential Address</label>
+                        <input
+                          type="text"
+                          className="ui-form-control"
+                          value={editForm.address}
+                          onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                        />
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                        <button type="submit" className="ui-btn ui-btn-primary">Submit Correction</button>
+                        <button type="button" className="ui-btn ui-btn-secondary" onClick={() => setIsEditing(false)}>Cancel</button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* Pending Items Alert Box */}
+              {admission.pendingItems && admission.pendingItems.length > 0 && !admission.correctionRequired && (
+                <div style={{
+                  backgroundColor: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "24px"
+                }}>
+                  <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#1e40af", fontWeight: "700" }}>
+                    📋 Document & Fee Requirements ({admission.pendingItems.length} pending)
+                  </h4>
+                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#1e3a8a" }}>
                     {admission.pendingItems.map((item, idx) => (
                       <li key={idx} style={{ marginBottom: "4px", fontWeight: "600" }}>{item}</li>
                     ))}
@@ -227,60 +380,14 @@ export default function PublicAdmissionStatus() {
                   </p>
                   {admission.createdStudentId && (
                     <div style={{ marginTop: "8px", display: "inline-block", backgroundColor: "#dcfce7", color: "#14532d", padding: "4px 12px", borderRadius: "20px", fontWeight: "700", fontSize: "13px" }}>
-                      Student Reg No: {admission.createdStudentId}
+                      Student Reg No: {admission.createdAdmissionNo || admission.createdStudentId}
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Verification Checklist Detail */}
-              <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "16px" }}>
-                <h4 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "600", color: "#1e293b" }}>
-                  Document & Fee Verification Status
-                </h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {Object.entries(admission.checklist || {}).map(([key, val]) => {
-                    const labelMap = {
-                      birthCertificate: "Birth Certificate",
-                      aadhaarCard: "Aadhaar Card",
-                      photo: "Passport Size Photograph",
-                      transferCertificate: "Transfer Certificate (TC)",
-                      registrationFeePaid: "Registration Fee Payment"
-                    };
-                    const title = labelMap[key] || key;
-                    const isDone = Boolean(val);
-
-                    return (
-                      <div key={key} style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: isDone ? "#f0fdf4" : "#fef2f2",
-                        border: `1px solid ${isDone ? "#dcfce7" : "#fecaca"}`
-                      }}>
-                        <span style={{ fontSize: "13px", fontWeight: "500", color: isDone ? "#166534" : "#991b1b" }}>
-                          {title}
-                        </span>
-                        <span style={{
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          color: isDone ? "#15803d" : "#dc2626",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px"
-                        }}>
-                          {isDone ? "✓ Verified" : "⏳ Pending"}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Footer Refresh */}
-              <div style={{ marginTop: "24px", textAlign: "center" }}>
+              {/* Refresh Footer */}
+              <div style={{ textAlign: "center", marginTop: "20px" }}>
                 <button
                   onClick={fetchStatus}
                   style={{
@@ -293,7 +400,7 @@ export default function PublicAdmissionStatus() {
                     textDecoration: "underline"
                   }}
                 >
-                  🔄 Refresh Status
+                  🔄 Refresh Live Status
                 </button>
               </div>
             </>

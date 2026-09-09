@@ -1,8 +1,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import "../Style/attendance.css";
+import { SERVER_BASE_URL } from "../config/api";
 
-const API = "http:// https://school-web-hng4.onrender.com";
+const API = SERVER_BASE_URL;
 
 function Attendance() {
   // =====================================================

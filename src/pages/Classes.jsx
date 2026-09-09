@@ -578,8 +578,8 @@ function Classes() {
     try {
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/${item.id}`
+      const response = await fetchWithAuth(
+        `/classes/${item.id}`
       );
 
       const data =

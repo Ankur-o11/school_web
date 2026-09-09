@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import "../Style/fees.css";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "http:// https://school-web-hng4.onrender.com/api";
+const API_URL = API_BASE_URL;
 
 function Fees() {
   const [students, setStudents] = useState([]);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../Style/teacher-salary.css";
+import { API_BASE_URL } from "../config/api";
 
 function TeacherSalary() {
   const [teachers, setTeachers] = useState([]);
@@ -40,7 +41,7 @@ function TeacherSalary() {
   const fetchTeachers = async () => {
     try {
       const response = await fetch(
-        "http:// https://school-web-hng4.onrender.com/api/teachers"
+        `${API_BASE_URL}/teachers`
       );
 
       if (!response.ok) {
@@ -69,7 +70,7 @@ function TeacherSalary() {
   const fetchSalaryRecords = async () => {
     try {
       const response = await fetch(
-        "http:// https://school-web-hng4.onrender.com/api/teacher-salary"
+        `${API_BASE_URL}/teacher-salary`
       );
 
       if (!response.ok) {
@@ -98,7 +99,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
+        `${API_BASE_URL}/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
       );
 
       const data = await response.json();
@@ -142,7 +143,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        "http:// https://school-web-hng4.onrender.com/api/teacher-salary",
+        `${API_BASE_URL}/teacher-salary`,
         {
           method: "POST",
           headers: {
@@ -208,7 +209,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/${salary.id}/payment`,
+        `${API_BASE_URL}/teacher-salary/${salary.id}/payment`,
         {
           method: "POST",
           headers: {
@@ -260,7 +261,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/${id}`,
+        `${API_BASE_URL}/teacher-salary/${id}`,
         {
           method: "DELETE",
         }

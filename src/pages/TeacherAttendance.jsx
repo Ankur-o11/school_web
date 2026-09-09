@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../Style/teacher-attendance.css";
+import { API_BASE_URL } from "../config/api";
 
 function TeacherAttendance() {
   const [teachers, setTeachers] = useState([]);
@@ -36,7 +37,7 @@ function TeacherAttendance() {
   const fetchTeachers = async () => {
     try {
       const response = await fetch(
-        "http:// https://school-web-hng4.onrender.com/api/teachers"
+        `${API_BASE_URL}/teachers`
       );
 
       if (!response.ok) {
@@ -66,7 +67,7 @@ function TeacherAttendance() {
       const month = date.substring(0, 7);
 
       const response = await fetch(
-        `http:// https://school-web-hng4.onrender.com/api/teacher-attendance/month/${month}`
+        `${API_BASE_URL}/teacher-attendance/month/${month}`
       );
 
       if (!response.ok) {
@@ -206,7 +207,7 @@ function TeacherAttendance() {
         }
 
         const response = await fetch(
-          "http:// https://school-web-hng4.onrender.com/api/teacher-attendance",
+          `${API_BASE_URL}/teacher-attendance`,
           {
             method: "POST",
 

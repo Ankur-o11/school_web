@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard, { StatGrid } from "../components/ui/StatCard";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 import "../Style/ui.css";
 
 export function Dashboard() {
@@ -18,38 +19,32 @@ export function Dashboard() {
 
   useEffect(() => {
     // Fetch live metrics from existing APIs safely
-    fetch("/api/students")
-      ? fetch("/api/students")
-          .then((res) => res.json())
-          .then((data) => {
-            if (Array.isArray(data)) {
-              setMetrics((prev) => ({ ...prev, totalStudents: data.length }));
-            }
-          })
-          .catch(() => {})
-      : null;
+    fetch(`${API_BASE_URL}/students`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMetrics((prev) => ({ ...prev, totalStudents: data.length }));
+        }
+      })
+      .catch(() => {});
 
-    fetch("/api/teachers")
-      ? fetch("/api/teachers")
-          .then((res) => res.json())
-          .then((data) => {
-            if (Array.isArray(data)) {
-              setMetrics((prev) => ({ ...prev, totalTeachers: data.length }));
-            }
-          })
-          .catch(() => {})
-      : null;
+    fetch(`${API_BASE_URL}/teachers`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMetrics((prev) => ({ ...prev, totalTeachers: data.length }));
+        }
+      })
+      .catch(() => {});
 
-    fetch("/api/classes")
-      ? fetch("/api/classes")
-          .then((res) => res.json())
-          .then((data) => {
-            if (Array.isArray(data)) {
-              setMetrics((prev) => ({ ...prev, totalClasses: data.length }));
-            }
-          })
-          .catch(() => {})
-      : null;
+    fetch(`${API_BASE_URL}/classes`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMetrics((prev) => ({ ...prev, totalClasses: data.length }));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const quickActions = [

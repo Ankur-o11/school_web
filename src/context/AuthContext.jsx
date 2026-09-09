@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "../config/api";
 
 const AuthContext = createContext();
-
-const API_BASE_URL = "http:// https://school-web-hng4.onrender.com/api";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

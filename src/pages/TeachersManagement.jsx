@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "../Style/teachers-management.css";
+import { API_BASE_URL } from "../config/api";
 
 function TeachersManagement() {
   const emptyForm = {
@@ -30,7 +31,7 @@ function TeachersManagement() {
   const loadTeachers = async () => {
     try {
       const response = await fetch(
-        "http:// https://school-web-hng4.onrender.com/api/teachers"
+        `${API_BASE_URL}/teachers`
       );
 
       const data = await response.json();
@@ -162,8 +163,8 @@ function TeachersManagement() {
 
       const url =
         editingId !== null
-          ? `http:// https://school-web-hng4.onrender.com/api/teachers/${editingId}`
-          : "http:// https://school-web-hng4.onrender.com/api/teachers";
+          ? `${API_BASE_URL}/teachers/${editingId}`
+          : `${API_BASE_URL}/teachers`;
 
       const response = await fetch(url, {
         method: editingId !== null ? "PUT" : "POST",
@@ -215,7 +216,7 @@ function TeachersManagement() {
 
     try {
       const response = await fetch(
-        `http:// https://school-web-hng4.onrender.com/api/teachers/${id}`,
+        `${API_BASE_URL}/teachers/${id}`,
         {
           method: "DELETE",
         }

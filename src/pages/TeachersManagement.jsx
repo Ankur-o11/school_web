@@ -30,7 +30,7 @@ function TeachersManagement() {
   const loadTeachers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/teachers"
+        "http:// https://school-web-hng4.onrender.com/api/teachers"
       );
 
       const data = await response.json();
@@ -162,8 +162,8 @@ function TeachersManagement() {
 
       const url =
         editingId !== null
-          ? `http://localhost:5000/api/teachers/${editingId}`
-          : "http://localhost:5000/api/teachers";
+          ? `http:// https://school-web-hng4.onrender.com/api/teachers/${editingId}`
+          : "http:// https://school-web-hng4.onrender.com/api/teachers";
 
       const response = await fetch(url, {
         method: editingId !== null ? "PUT" : "POST",
@@ -215,7 +215,7 @@ function TeachersManagement() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/teachers/${id}`,
+        `http:// https://school-web-hng4.onrender.com/api/teachers/${id}`,
         {
           method: "DELETE",
         }

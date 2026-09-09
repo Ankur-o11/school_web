@@ -36,7 +36,7 @@ function TeacherAttendance() {
   const fetchTeachers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/teachers"
+        "http:// https://school-web-hng4.onrender.com/api/teachers"
       );
 
       if (!response.ok) {
@@ -66,7 +66,7 @@ function TeacherAttendance() {
       const month = date.substring(0, 7);
 
       const response = await fetch(
-        `http://localhost:5000/api/teacher-attendance/month/${month}`
+        `http:// https://school-web-hng4.onrender.com/api/teacher-attendance/month/${month}`
       );
 
       if (!response.ok) {
@@ -206,7 +206,7 @@ function TeacherAttendance() {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/teacher-attendance",
+          "http:// https://school-web-hng4.onrender.com/api/teacher-attendance",
           {
             method: "POST",
 

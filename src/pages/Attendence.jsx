@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "../Style/attendance.css";
 
-const API = "http://localhost:5000";
+const API = "http:// https://school-web-hng4.onrender.com";
 
 function Attendance() {
   // =====================================================

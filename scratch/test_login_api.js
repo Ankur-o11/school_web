@@ -10,7 +10,7 @@ async function testLogin() {
   console.log("Testing POST /api/auth/login with env ADMIN_EMAIL...");
 
   try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
+    const res = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ identifier: email, password })

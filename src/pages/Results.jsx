@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../Style/Results.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "http:// https://school-web-hng4.onrender.com";
 const EXAM_STORAGE_KEY = "mpsa_results_exams";
 const SESSION = "2026-27";
 

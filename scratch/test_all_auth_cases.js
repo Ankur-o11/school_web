@@ -11,7 +11,7 @@ async function runAllTests() {
 
   // TEST 1: Correct Credentials Login
   console.log("\n[TEST 1] Correct Admin Credentials Login:");
-  const res1 = await fetch("http://localhost:5000/api/auth/login", {
+  const res1 = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier: email, password })
@@ -23,7 +23,7 @@ async function runAllTests() {
 
   // TEST 2: Wrong Password
   console.log("\n[TEST 2] Wrong Password Test:");
-  const res2 = await fetch("http://localhost:5000/api/auth/login", {
+  const res2 = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier: email, password: "wrong_password_123" })
@@ -35,7 +35,7 @@ async function runAllTests() {
 
   // TEST 3: Non-existing Email
   console.log("\n[TEST 3] Non-existing Email Test:");
-  const res3 = await fetch("http://localhost:5000/api/auth/login", {
+  const res3 = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier: "nonexistent.user@mpsa.com", password: "some_password" })
@@ -47,7 +47,7 @@ async function runAllTests() {
 
   // TEST 4 & 5: Authenticated Request to GET /api/auth/me
   console.log("\n[TEST 4 & 5] Authenticated /api/auth/me Request:");
-  const res4 = await fetch("http://localhost:5000/api/auth/me", {
+  const res4 = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/me", {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -58,7 +58,7 @@ async function runAllTests() {
 
   // TEST 6: Logout Request
   console.log("\n[TEST 6] Logout Request:");
-  const res5 = await fetch("http://localhost:5000/api/auth/logout", {
+  const res5 = await fetch("http:// https://school-web-hng4.onrender.com/api/auth/logout", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` }
   });

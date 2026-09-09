@@ -6,7 +6,7 @@ function Classes() {
   // API
   // =========================================================
 
-  const API_URL = "http://localhost:5000/api/classes";
+  const API_URL = "http:// https://school-web-hng4.onrender.com/api/classes";
 
   // =========================================================
   // DEFAULT SUBJECTS

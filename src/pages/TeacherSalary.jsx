@@ -40,7 +40,7 @@ function TeacherSalary() {
   const fetchTeachers = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/teachers"
+        "http:// https://school-web-hng4.onrender.com/api/teachers"
       );
 
       if (!response.ok) {
@@ -69,7 +69,7 @@ function TeacherSalary() {
   const fetchSalaryRecords = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/teacher-salary"
+        "http:// https://school-web-hng4.onrender.com/api/teacher-salary"
       );
 
       if (!response.ok) {
@@ -98,7 +98,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
+        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/calculate?teacherId=${selectedTeacher}&month=${selectedMonth}&workingDays=${workingDays}`
       );
 
       const data = await response.json();
@@ -142,7 +142,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/teacher-salary",
+        "http:// https://school-web-hng4.onrender.com/api/teacher-salary",
         {
           method: "POST",
           headers: {
@@ -208,7 +208,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/teacher-salary/${salary.id}/payment`,
+        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/${salary.id}/payment`,
         {
           method: "POST",
           headers: {
@@ -260,7 +260,7 @@ function TeacherSalary() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/teacher-salary/${id}`,
+        `http:// https://school-web-hng4.onrender.com/api/teacher-salary/${id}`,
         {
           method: "DELETE",
         }

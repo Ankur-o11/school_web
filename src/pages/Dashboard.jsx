@@ -52,11 +52,12 @@ export function Dashboard() {
 
   const quickActions = [
     { title: "Student Management", icon: "👨‍🎓", route: "/students", color: "#eff6ff" },
+    { title: "Online Applications", icon: "💻", route: "/admissions?source=online", color: "#ecfdf5" },
     { title: "Teacher Directory", icon: "👨‍🏫", route: "/teachers", color: "#f0fdf4" },
     { title: "Attendance Manager", icon: "📅", route: "/attendance", color: "#fefce8" },
     { title: "Fee Collection", icon: "💰", route: "/fees", color: "#fdf2f8" },
     { title: "Exams & Results", icon: "📝", route: "/results", color: "#f3e8ff" },
-    { title: "Master Timetable", icon: "🗓️", route: "/timetable", color: "#e0f2fe" }
+    { title: "Public Online Form", icon: "🎓", route: "/online-admission", color: "#e0f2fe" }
   ];
 
   return (

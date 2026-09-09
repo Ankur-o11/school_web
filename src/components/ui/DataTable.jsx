@@ -8,14 +8,23 @@ export function DataTable({
   searchPlaceholder = "Search records...",
   searchKey,
   filters = [],
+  initialFilterValues = {},
   loading = false,
   emptyTitle = "No records found",
   emptyDescription = "Try adjusting your search filters or add a new record.",
   pageSize = 10
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterValues, setFilterValues] = useState({});
+  const [filterValues, setFilterValues] = useState(initialFilterValues);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Synchronize initialFilterValues if updated from parent
+  const filterValString = JSON.stringify(initialFilterValues);
+  useMemo(() => {
+    if (initialFilterValues && Object.keys(initialFilterValues).length > 0) {
+      setFilterValues(initialFilterValues);
+    }
+  }, [filterValString]);
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -36,7 +45,7 @@ export function DataTable({
       for (const filter of filters) {
         const selectedVal = filterValues[filter.key];
         if (selectedVal && selectedVal !== "ALL") {
-          if (String(item[filter.key]) !== String(selectedVal)) {
+          if (String(item[filter.key] || "").toLowerCase() !== String(selectedVal).toLowerCase()) {
             return false;
           }
         }

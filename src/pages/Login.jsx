@@ -37,6 +37,21 @@ function Login() {
     <div className="login-container">
       <div className="login-background-decor"></div>
 
+      {/* PUBLIC ACCESS BANNER FOR ONLINE ADMISSION */}
+      <div className="login-top-banner">
+        <div className="login-top-info">
+          <span className="banner-badge">NEW SESSION 2026-2027</span>
+          <span className="banner-text">Online Admissions are open for new students!</span>
+        </div>
+        <button
+          type="button"
+          className="login-top-cta"
+          onClick={() => navigate("/online-admission")}
+        >
+          🎓 Online Admission →
+        </button>
+      </div>
+
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">M</div>
@@ -92,6 +107,22 @@ function Login() {
             {isSubmitting ? "Signing in..." : "Sign In to ERP"}
           </button>
         </form>
+
+        {/* ONLINE ADMISSION PUBLIC OPTION FOR PARENTS */}
+        <div className="login-online-admission-box">
+          <p className="online-adm-label">New Student / Parent Registration?</p>
+          <button
+            type="button"
+            className="login-online-btn"
+            onClick={() => navigate("/online-admission")}
+          >
+            <span>🎓</span>
+            <span>Apply for Admission Online</span>
+          </button>
+          <small className="online-adm-sub">
+            Parents do NOT need to log in to apply for admission.
+          </small>
+        </div>
 
         <div className="login-footer">
           <p>© 2026 MPSA School Management System. Secure Access.</p>

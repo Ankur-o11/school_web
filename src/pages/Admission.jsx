@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard, { StatGrid } from "../components/ui/StatCard";
 import DataTable from "../components/ui/DataTable";
@@ -11,6 +12,9 @@ import "../Style/ui.css";
 
 export function Admission() {
   const { fetchWithAuth } = useAuth();
+  const [searchParams] = useSearchParams();
+  const sourceQuery = searchParams.get("source");
+
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -414,6 +418,7 @@ export function Admission() {
           columns={columns}
           data={applications}
           searchPlaceholder="Search applicant, parent name, ID, mobile..."
+          initialFilterValues={sourceQuery ? { source: sourceQuery } : {}}
           filters={[
             {
               key: "source",

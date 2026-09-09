@@ -4,13 +4,23 @@ import StatCard, { StatGrid } from "../components/ui/StatCard";
 import DataTable from "../components/ui/DataTable";
 import StatusBadge from "../components/ui/StatusBadge";
 import Modal from "../components/ui/Modal";
+import WhatsAppModal from "../components/WhatsAppModal";
 import { useAuth } from "../context/AuthContext";
 import API_BASE_URL from "../config/api";
+import { isValidWhatsAppNumber, normalizePhoneNumber } from "../services/whatsappService";
 import "../Style/ui.css";
 
 export function ParentCommunication() {
   const { fetchWithAuth } = useAuth();
-  const [activeTab, setActiveTab] = useState("wizard");
+  const [activeTab, setActiveTab] = useState("single");
+
+  // Single Student State
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchClass, setSearchClass] = useState("All");
+  const [searchSection, setSearchSection] = useState("All");
+  const [selectedStudentForWhatsApp, setSelectedStudentForWhatsApp] = useState(null);
 
   // Broadcast Wizard State
   const [targetType, setTargetType] = useState("class");
@@ -32,28 +42,80 @@ export function ParentCommunication() {
   const [logs, setLogs] = useState([]);
   const [editingTemplate, setEditingTemplate] = useState(null);
 
-  // Fetch templates and logs
-  const fetchTemplatesAndLogs = async () => {
+  // Fetch initial data
+  const fetchData = async () => {
     try {
-      const [tplRes, logRes] = await Promise.all([
+      setStudentsLoading(true);
+      const [tplRes, logRes, studRes] = await Promise.all([
         fetchWithAuth(`${API_BASE_URL}/communications/templates`),
-        fetchWithAuth(`${API_BASE_URL}/communications/logs`)
+        fetchWithAuth(`${API_BASE_URL}/communications/logs`),
+        fetchWithAuth(`${API_BASE_URL}/students`)
       ]);
       const tplData = await tplRes.json();
       const logData = await logRes.json();
+      const studData = await studRes.json();
 
       if (tplData.success) setTemplates(tplData.data || []);
       if (logData.success) setLogs(logData.data || []);
+      
+      if (Array.isArray(studData)) {
+        setStudents(studData);
+      } else if (studData.success && Array.isArray(studData.data)) {
+        setStudents(studData.data);
+      }
     } catch (err) {
       console.error("Fetch communications data error:", err);
+    } finally {
+      setStudentsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTemplatesAndLogs();
+    fetchData();
   }, []);
 
-  // Compile messages for target audience
+  // Filter students by name, admissionNo, roll, parentName, phone, class, section
+  const filteredStudents = students.filter((s) => {
+    const parentPhone =
+      s.parentPhone ||
+      s.fatherMobile ||
+      s.motherMobile ||
+      s.phone ||
+      s.contact ||
+      s.mobile ||
+      s.alternateMobile ||
+      "";
+
+    const parentName =
+      s.father ||
+      s.fatherName ||
+      s.parentName ||
+      s.mother ||
+      s.motherName ||
+      "";
+
+    const q = searchQuery.toLowerCase().trim();
+    const matchQuery =
+      !q ||
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.admissionNo && String(s.admissionNo).toLowerCase().includes(q)) ||
+      (s.roll && String(s.roll).toLowerCase().includes(q)) ||
+      (parentName && parentName.toLowerCase().includes(q)) ||
+      (parentPhone && parentPhone.includes(q));
+
+    const matchClass =
+      searchClass === "All" ||
+      s.className === searchClass ||
+      s.class === searchClass;
+
+    const matchSection =
+      searchSection === "All" ||
+      s.section === searchSection;
+
+    return matchQuery && matchClass && matchSection;
+  });
+
+  // Compile messages for target audience (Class-wise)
   const handleCompileMessages = async () => {
     try {
       setLoading(true);
@@ -90,7 +152,7 @@ export function ParentCommunication() {
     setCurrentIndex(0);
   };
 
-  // Log and step to next student
+  // Log and step to next student in runner
   const handleNextStep = async (status = "Opened", openUrl = false) => {
     if (!compiledResult || !compiledResult.items[currentIndex]) return;
     const currentItem = compiledResult.items[currentIndex];
@@ -112,7 +174,7 @@ export function ParentCommunication() {
           status: openUrl ? "Opened" : status,
         }),
       });
-      fetchTemplatesAndLogs();
+      fetchData();
     } catch (err) {
       console.error("Log error:", err);
     }
@@ -138,7 +200,7 @@ export function ParentCommunication() {
       if (data.success) {
         alert("Template saved successfully!");
         setEditingTemplate(null);
-        fetchTemplatesAndLogs();
+        fetchData();
       } else {
         alert(data.message || "Failed to save template.");
       }
@@ -162,21 +224,22 @@ export function ParentCommunication() {
       <PageHeader
         breadcrumb="Communication"
         title="Parent Communication Center"
-        description="Send real-data WhatsApp fee updates, attendance reports, report cards, and notices via safe sequential workflows."
+        description="Send real-data WhatsApp fee updates, attendance reports, report cards, and notices directly to individual parents or whole classes."
         icon="💬"
       />
 
       <StatGrid>
-        <StatCard title="Total Communication Logs" value={logs.length} icon="📜" />
-        <StatCard title="Active Message Templates" value={templates.length || 5} icon="📝" />
-        <StatCard title="WhatsApp Method" value="Click-to-Send Workflow" icon="🟢" />
-        <StatCard title="Audit Status" value="Secure & Logged" icon="🔐" />
+        <StatCard title="Total Students" value={students.length} icon="👨‍🎓" />
+        <StatCard title="Communication Logs" value={logs.length} icon="📜" />
+        <StatCard title="Message Templates" value={templates.length || 5} icon="📝" />
+        <StatCard title="WhatsApp System" value="Real DB Data & Normalization" icon="🟢" />
       </StatGrid>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #e2e8f0", marginBottom: "24px" }}>
+      {/* Navigation Tabs */}
+      <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #e2e8f0", marginBottom: "24px", flexWrap: "wrap" }}>
         {[
-          { id: "wizard", label: "💬 WhatsApp Broadcast Wizard", icon: "💬" },
+          { id: "single", label: "👤 Particular Student WhatsApp", icon: "👤" },
+          { id: "wizard", label: "💬 Class-Wise Broadcast", icon: "💬" },
           { id: "templates", label: "📝 Template Editor", icon: "📝" },
           { id: "logs", label: "📜 Communication Logs", icon: "📜" }
         ].map((tab) => (
@@ -199,14 +262,164 @@ export function ParentCommunication() {
         ))}
       </div>
 
-      {/* TAB 1: BROADCAST WIZARD */}
+      {/* TAB 1: PARTICULAR STUDENT WHATSAPP SEARCH */}
+      {activeTab === "single" && (
+        <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "17px", color: "#1e293b" }}>
+            🔍 Search & Send WhatsApp Message to Particular Student Parent
+          </h3>
+
+          <div className="ui-form-row" style={{ marginBottom: "20px" }}>
+            <div className="ui-form-group" style={{ flex: "2" }}>
+              <label>Search Student (Name / Admission No / Roll No / Parent / Phone)</label>
+              <input
+                type="text"
+                className="ui-form-control"
+                placeholder="Type student name, admission no, roll, parent name, or mobile number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="ui-form-group">
+              <label>Class Filter</label>
+              <select
+                className="ui-form-control"
+                value={searchClass}
+                onChange={(e) => setSearchClass(e.target.value)}
+              >
+                <option value="All">All Classes</option>
+                <option value="PG">PG / Nursery</option>
+                <option value="LKG">LKG</option>
+                <option value="UKG">UKG</option>
+                <option value="Class 1">Class 1</option>
+                <option value="Class 2">Class 2</option>
+                <option value="Class 3">Class 3</option>
+                <option value="Class 4">Class 4</option>
+                <option value="Class 5">Class 5</option>
+                <option value="Class 6">Class 6</option>
+                <option value="Class 7">Class 7</option>
+                <option value="Class 8">Class 8</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 10">Class 10</option>
+                <option value="Class 11 Science">Class 11 Science</option>
+                <option value="Class 11 Commerce">Class 11 Commerce</option>
+                <option value="Class 12">Class 12</option>
+              </select>
+            </div>
+
+            <div className="ui-form-group">
+              <label>Section Filter</label>
+              <select
+                className="ui-form-control"
+                value={searchSection}
+                onChange={(e) => setSearchSection(e.target.value)}
+              >
+                <option value="All">All Sections</option>
+                <option value="A">Section A</option>
+                <option value="B">Section B</option>
+                <option value="C">Section C</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Student Table */}
+          {studentsLoading ? (
+            <p style={{ color: "#64748b", padding: "20px 0" }}>Loading student database...</p>
+          ) : filteredStudents.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#64748b", border: "1px dashed #cbd5e1", borderRadius: "8px" }}>
+              <h4>No Students Found</h4>
+              <p style={{ margin: "4px 0 0 0", fontSize: "14px" }}>Try searching with different terms or adjusting the class/section filters.</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+                    <th style={{ padding: "12px" }}>Student Name</th>
+                    <th style={{ padding: "12px" }}>Admission / Roll</th>
+                    <th style={{ padding: "12px" }}>Class</th>
+                    <th style={{ padding: "12px" }}>Parent Name</th>
+                    <th style={{ padding: "12px" }}>Parent WhatsApp</th>
+                    <th style={{ padding: "12px", textAlign: "center" }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.slice(0, 50).map((student) => {
+                    const parentPhone =
+                      student.parentPhone ||
+                      student.fatherMobile ||
+                      student.motherMobile ||
+                      student.phone ||
+                      student.contact ||
+                      student.mobile ||
+                      student.alternateMobile ||
+                      "";
+
+                    const parentName =
+                      student.father ||
+                      student.fatherName ||
+                      student.parentName ||
+                      student.mother ||
+                      student.motherName ||
+                      "Parent/Guardian";
+
+                    const normalized = normalizePhoneNumber(parentPhone);
+                    const hasValid = isValidWhatsAppNumber(parentPhone);
+
+                    return (
+                      <tr key={student.id || student._id} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                        <td style={{ padding: "12px", fontWeight: "600", color: "#1e293b" }}>{student.name}</td>
+                        <td style={{ padding: "12px", color: "#64748b" }}>{student.admissionNo || "—"} / Roll {student.roll || "—"}</td>
+                        <td style={{ padding: "12px" }}>{student.className || student.class || "—"} {student.section ? `(${student.section})` : ""}</td>
+                        <td style={{ padding: "12px" }}>{parentName}</td>
+                        <td style={{ padding: "12px" }}>
+                          {hasValid ? (
+                            <span style={{ color: "#166534", fontWeight: "600" }}>+{normalized}</span>
+                          ) : (
+                            <span style={{ color: "#dc2626", fontWeight: "600" }}>⚠️ {parentPhone || "Missing"}</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px", textAlign: "center" }}>
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn-primary"
+                            style={{
+                              backgroundColor: hasValid ? "#25D366" : "#cbd5e1",
+                              color: "#ffffff",
+                              cursor: hasValid ? "pointer" : "not-allowed",
+                              fontSize: "13px",
+                              padding: "6px 14px"
+                            }}
+                            disabled={!hasValid}
+                            onClick={() => setSelectedStudentForWhatsApp(student)}
+                          >
+                            💬 Send WhatsApp
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredStudents.length > 50 && (
+                <p style={{ textAlign: "center", color: "#64748b", marginTop: "12px", fontSize: "13px" }}>
+                  Showing top 50 matches out of {filteredStudents.length} total students. Refine search query for more exact results.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: CLASS BROADCAST WIZARD */}
       {activeTab === "wizard" && (
         <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
-          <h3 style={{ margin: "0 0 16px 0", fontSize: "17px", color: "#1e293b" }}>1. Select Target Audience & Communication Type</h3>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "17px", color: "#1e293b" }}>1. Select Target Class & Communication Type</h3>
 
           <div className="ui-form-row">
             <div className="ui-form-group">
-              <label>Target Audience *</label>
+              <label>Target Class *</label>
               <select
                 className="ui-form-control"
                 value={targetClass}
@@ -290,7 +503,7 @@ export function ParentCommunication() {
         </div>
       )}
 
-      {/* TAB 2: TEMPLATE EDITOR */}
+      {/* TAB 3: TEMPLATE EDITOR */}
       {activeTab === "templates" && (
         <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", padding: "24px" }}>
           <h3 style={{ margin: "0 0 16px 0", fontSize: "17px", color: "#1e293b" }}>Reusable WhatsApp Message Templates</h3>
@@ -318,7 +531,7 @@ export function ParentCommunication() {
         </div>
       )}
 
-      {/* TAB 3: COMMUNICATION LOGS */}
+      {/* TAB 4: COMMUNICATION LOGS */}
       {activeTab === "logs" && (
         <div>
           <DataTable
@@ -327,6 +540,14 @@ export function ParentCommunication() {
             searchPlaceholder="Search by student name, number, or message type..."
           />
         </div>
+      )}
+
+      {/* Modal for Particular Student WhatsApp */}
+      {selectedStudentForWhatsApp && (
+        <WhatsAppModal
+          student={selectedStudentForWhatsApp}
+          onClose={() => setSelectedStudentForWhatsApp(null)}
+        />
       )}
 
       {/* Confirmation Modal Before Launching Sequential Workflow */}

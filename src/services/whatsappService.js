@@ -2,18 +2,38 @@
 
 export function normalizePhoneNumber(phone) {
   if (!phone) return null;
-  let cleaned = String(phone).trim().replace(/[^\d+]/g, "");
-  if (!cleaned) return null;
-  if (cleaned.startsWith("+")) {
-    cleaned = cleaned.substring(1);
+
+  // Convert to string and strip all non-digit characters
+  let digits = String(phone).trim().replace(/\D/g, "");
+
+  if (!digits) return null;
+
+  // Case A: Leading '0' (e.g. 09876543210 -> 11 digits starting with 0)
+  if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.substring(1);
   }
-  if (/^\d{10}$/.test(cleaned)) {
-    cleaned = `91${cleaned}`;
+
+  // Case B: 10 digits starting with valid Indian mobile prefix (6, 7, 8, 9)
+  if (digits.length === 10 && /^[6789]\d{9}$/.test(digits)) {
+    return `91${digits}`;
   }
-  if (cleaned.length < 10 || cleaned.length > 15) {
-    return null;
+
+  // Case C: 12 digits starting with '91' and valid 10-digit Indian mobile (6, 7, 8, 9)
+  if (digits.length === 12 && digits.startsWith("91") && /^91[6789]\d{9}$/.test(digits)) {
+    return digits;
   }
-  return cleaned;
+
+  // Case D: General 10-digit fallback
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+
+  // Case E: International numbers (11 to 15 digits)
+  if (digits.length >= 11 && digits.length <= 15) {
+    return digits;
+  }
+
+  return null;
 }
 
 export function isValidWhatsAppNumber(phone) {
@@ -21,14 +41,11 @@ export function isValidWhatsAppNumber(phone) {
 }
 
 export function generateWhatsAppLink(phone, message) {
+  const normalized = normalizePhoneNumber(phone);
   const encodedMsg = encodeURIComponent(message || "");
-  if (phone) {
-    const normalized = normalizePhoneNumber(phone);
-    if (normalized) {
-      return `https://wa.me/${normalized}?text=${encodedMsg}`;
-    }
+  if (normalized) {
+    return `https://wa.me/${normalized}?text=${encodedMsg}`;
   }
-  // If no specific phone number, use universal WhatsApp share URL
   return `https://api.whatsapp.com/send?text=${encodedMsg}`;
 }
 

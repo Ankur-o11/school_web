@@ -1627,8 +1627,16 @@ function Students() {
 
           filteredStudents.map(
             (student) => {
-              const phone = student.mobile || student.alternateMobile;
-              const hasValidPhone = isValidWhatsAppNumber(phone);
+              const parentPhone =
+                student.parentPhone ||
+                student.fatherMobile ||
+                student.motherMobile ||
+                student.phone ||
+                student.contact ||
+                student.mobile ||
+                student.alternateMobile ||
+                "";
+              const hasValidPhone = isValidWhatsAppNumber(parentPhone);
 
               return (
                 <div
@@ -1654,6 +1662,8 @@ function Students() {
                     <small>
                       Father:{" "}
                       {student.father ||
+                        student.fatherName ||
+                        student.parentName ||
                         "Not Provided"}
                     </small>
 
@@ -1674,7 +1684,7 @@ function Students() {
                   </span>
 
                   <span>
-                    {student.mobile ||
+                    {parentPhone ||
                       "—"}
                   </span>
 
@@ -1703,7 +1713,7 @@ function Students() {
                       className={`whatsapp-action-btn ${hasValidPhone ? "active" : "disabled"}`}
                       title={
                         hasValidPhone
-                          ? `Send WhatsApp Message to ${student.name} (${phone})`
+                          ? `Parent Communication: Send WhatsApp Message to ${student.name} (${parentPhone})`
                           : "WhatsApp number not available"
                       }
                       disabled={!hasValidPhone}

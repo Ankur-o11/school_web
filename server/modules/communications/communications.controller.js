@@ -132,9 +132,23 @@ async function buildStudentPayload(db, studentDoc, type, customNoticeText = "", 
   const session = `${currentYear}-${String(currentYear + 1).slice(-2)}`;
   const studentId = studentDoc._id ? studentDoc._id.toString() : studentDoc.id;
 
-  const parentPhone = studentDoc.parentPhone || studentDoc.phone || studentDoc.contact || "";
+  const parentPhone =
+    studentDoc.parentPhone ||
+    studentDoc.fatherMobile ||
+    studentDoc.motherMobile ||
+    studentDoc.phone ||
+    studentDoc.contact ||
+    studentDoc.mobile ||
+    studentDoc.alternateMobile ||
+    "";
   const normalizedPhone = normalizePhoneNumber(parentPhone);
-  const parentName = studentDoc.fatherName || studentDoc.parentName || "Parent/Guardian";
+  const parentName =
+    studentDoc.father ||
+    studentDoc.fatherName ||
+    studentDoc.parentName ||
+    studentDoc.mother ||
+    studentDoc.motherName ||
+    "Parent/Guardian";
 
   let variables = {
     studentName: studentDoc.name || "",

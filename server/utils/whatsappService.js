@@ -3,27 +3,37 @@
 export function normalizePhoneNumber(phone) {
   if (!phone) return null;
 
-  // Strip all non-digit characters except leading +
-  let cleaned = String(phone).trim().replace(/[^\d+]/g, "");
+  // Convert to string and strip all non-digit characters
+  let digits = String(phone).trim().replace(/\D/g, "");
 
-  if (!cleaned) return null;
+  if (!digits) return null;
 
-  // Handle + prefix
-  if (cleaned.startsWith("+")) {
-    cleaned = cleaned.substring(1);
+  // Case A: Leading '0' (e.g. 09876543210 -> 11 digits starting with 0)
+  if (digits.length === 11 && digits.startsWith("0")) {
+    digits = digits.substring(1);
   }
 
-  // If 10 digits (Standard Indian mobile number), prepend country code 91
-  if (/^\d{10}$/.test(cleaned)) {
-    cleaned = `91${cleaned}`;
+  // Case B: 10 digits starting with valid Indian mobile prefix (6, 7, 8, 9)
+  if (digits.length === 10 && /^[6789]\d{9}$/.test(digits)) {
+    return `91${digits}`;
   }
 
-  // Basic length validation (10 to 15 digits)
-  if (cleaned.length < 10 || cleaned.length > 15) {
-    return null; // Invalid length
+  // Case C: 12 digits starting with '91' and valid 10-digit Indian mobile (6, 7, 8, 9)
+  if (digits.length === 12 && digits.startsWith("91") && /^91[6789]\d{9}$/.test(digits)) {
+    return digits;
   }
 
-  return cleaned;
+  // Case D: General 10-digit fallback
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+
+  // Case E: International numbers (11 to 15 digits)
+  if (digits.length >= 11 && digits.length <= 15) {
+    return digits;
+  }
+
+  return null;
 }
 
 export function generateWhatsAppLink(phone, message) {

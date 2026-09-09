@@ -16,7 +16,7 @@ export default function PublicAdmissionStatus() {
       const res = await fetch(`${API_BASE_URL}/admissions/public/${encodeURIComponent(id)}`);
       const data = await res.json();
       if (data.success) {
-        setAdmission(data.data);
+        setAdmission(data.data || data.admission);
       } else {
         setError(data.message || "Application record not found.");
       }

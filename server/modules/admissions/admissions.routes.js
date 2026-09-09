@@ -24,8 +24,11 @@ router.get("/", authorizePermission("admissions.view"), listAdmissions);
 router.get("/:id", authorizePermission("admissions.view"), getAdmission);
 router.post("/", authorizePermission("admissions.create"), addAdmission);
 router.put("/:id/checklist", authorizePermission("admissions.edit"), updateAdmissionChecklist);
+router.patch("/:id/checklist", authorizePermission("admissions.edit"), updateAdmissionChecklist);
 router.put("/:id/status", authorizePermission("admissions.edit"), changeAdmissionStatus);
+router.patch("/:id/status", authorizePermission("admissions.edit"), changeAdmissionStatus);
 router.post("/:id/confirm", authorizePermission("admissions.edit"), confirmAdmission);
 router.post("/:id/whatsapp-reminder", authorizePermission("admissions.view"), sendWhatsAppReminder);
+router.get("/:id/whatsapp-reminder", authorizePermission("admissions.view"), sendWhatsAppReminder);
 
 export default router;

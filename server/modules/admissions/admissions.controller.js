@@ -10,10 +10,11 @@ import {
 // GET /api/admissions
 export async function listAdmissions(req, res) {
   try {
-    const data = await getAllAdmissions(req.query);
+    const list = await getAllAdmissions(req.query);
     res.json({
       success: true,
-      admissions: data,
+      data: list,
+      admissions: list,
     });
   } catch (error) {
     console.error("listAdmissions:", error);
@@ -38,6 +39,7 @@ export async function getPublicAdmission(req, res) {
 
     res.json({
       success: true,
+      data: admission,
       admission,
     });
   } catch (error) {
@@ -86,6 +88,7 @@ export async function addAdmission(req, res) {
     res.status(201).json({
       success: true,
       message: "Admission application registered successfully",
+      data: admission,
       admission,
       parentTrackingLink,
     });
@@ -106,6 +109,7 @@ export async function updateAdmissionChecklist(req, res) {
     res.json({
       success: true,
       message: "Admission checklist updated",
+      data: admission,
       admission,
     });
   } catch (error) {
@@ -132,6 +136,7 @@ export async function changeAdmissionStatus(req, res) {
     res.json({
       success: true,
       message: "Admission status updated",
+      data: result,
       result,
     });
   } catch (error) {

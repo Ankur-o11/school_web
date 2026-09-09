@@ -13,6 +13,9 @@ import {
 import {
   setStudentsDatabase,
 } from "./modules/students/students.controller.js";
+import {
+  setAdmissionsDatabase,
+} from "./modules/admissions/admissions.controller.js";
 
 import { seedInitialAdmin } from "./modules/auth/auth.controller.js";
 
@@ -25,6 +28,7 @@ import teacherSalaryRoutes from "./modules/teacherSalary/teacherSalary.routes.js
 import activityLogRoutes from "./modules/activityLog/activityLog.routes.js";
 
 import studentsRoutes from "./modules/students/students.routes.js";
+import admissionsRoutes from "./modules/admissions/admissions.routes.js";
 import subjectsRoutes from "./modules/subjects/subjects.routes.js";
 import resultsRoutes from "./modules/results/results.routes.js";
 import classesRoutes from "./modules/classes/classes.routes.js";
@@ -80,6 +84,7 @@ app.use("/api/activity-log", activityLogRoutes);
 app.use("/api/communications", communicationsRoutes);
 
 app.use("/api/students", studentsRoutes);
+app.use("/api/admissions", admissionsRoutes);
 app.use("/api/subjects", subjectsRoutes);
 app.use("/api/results", resultsRoutes);
 app.use("/api/classes", classesRoutes);
@@ -131,8 +136,9 @@ async function startServer() {
   try {
     const db = await connectDatabase();
 
-    // Students module uses its own database setter.
+    // Students and Admissions modules use their own database setters.
     setStudentsDatabase(db);
+    setAdmissionsDatabase(db);
 
     // Make database available to modules that use req.app.locals.db.
     app.locals.db = db;

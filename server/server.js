@@ -16,6 +16,9 @@ import {
 import {
   setAdmissionsDatabase,
 } from "./modules/admissions/admissions.service.js";
+import {
+  setTemplatesDatabase,
+} from "./modules/communications/templates.service.js";
 
 import { seedInitialAdmin } from "./modules/auth/auth.controller.js";
 
@@ -34,6 +37,8 @@ import resultsRoutes from "./modules/results/results.routes.js";
 import classesRoutes from "./modules/classes/classes.routes.js";
 import feesRoutes from "./modules/fees/fees.routes.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
+import communicationsRoutes from "./modules/communications/communications.routes.js";
+import templateRoutes from "./modules/communications/templates.routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "./server.env") });
@@ -68,8 +73,6 @@ app.use(
   })
 );
 
-import communicationsRoutes from "./modules/communications/communications.routes.js";
-
 // =====================================================
 // ACTIVE MODULES
 // =====================================================
@@ -82,6 +85,7 @@ app.use("/api/teacher-attendance", teacherAttendanceRoutes);
 app.use("/api/teacher-salary", teacherSalaryRoutes);
 app.use("/api/activity-log", activityLogRoutes);
 app.use("/api/communications", communicationsRoutes);
+app.use("/api/communication-templates", templateRoutes);
 
 app.use("/api/students", studentsRoutes);
 app.use("/api/admissions", admissionsRoutes);
@@ -136,9 +140,10 @@ async function startServer() {
   try {
     const db = await connectDatabase();
 
-    // Students and Admissions modules use their own database setters.
+    // Module database initializers
     setStudentsDatabase(db);
     setAdmissionsDatabase(db);
+    setTemplatesDatabase(db);
 
     // Make database available to modules that use req.app.locals.db.
     app.locals.db = db;

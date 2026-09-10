@@ -12,6 +12,13 @@ import {
   changeAdmissionStatus,
   confirmAdmission,
   sendWhatsAppReminder,
+  handleApproveApplication,
+  handleRejectApplication,
+  handleRequestDocuments,
+  handleAddDocument,
+  handleUpdateDocumentStatus,
+  handleDeleteDocument,
+  handleResendNotification,
 } from "./admissions.controller.js";
 
 import { authenticate, authorizePermission } from "../../middleware/auth.middleware.js";
@@ -30,7 +37,22 @@ router.use(authenticate);
 router.get("/", authorizePermission("admissions.view"), listAdmissions);
 router.get("/:id", authorizePermission("admissions.view"), getAdmission);
 router.post("/", authorizePermission("admissions.create"), addAdmission);
+
+// Status transition actions
+router.post("/:id/approve", authorizePermission("admissions.edit"), handleApproveApplication);
+router.post("/:id/reject", authorizePermission("admissions.edit"), handleRejectApplication);
+router.post("/:id/request-documents", authorizePermission("admissions.edit"), handleRequestDocuments);
 router.patch("/:id/request-correction", authorizePermission("admissions.edit"), handleRequestCorrection);
+
+// Document Manager actions
+router.post("/:id/documents", authorizePermission("admissions.edit"), handleAddDocument);
+router.patch("/:id/documents/:docId", authorizePermission("admissions.edit"), handleUpdateDocumentStatus);
+router.delete("/:id/documents/:docId", authorizePermission("admissions.edit"), handleDeleteDocument);
+
+// Manual Notification Resend
+router.post("/:id/resend-notification", authorizePermission("admissions.view"), handleResendNotification);
+
+// Checklist & Legacy status actions
 router.put("/:id/checklist", authorizePermission("admissions.edit"), updateAdmissionChecklist);
 router.patch("/:id/checklist", authorizePermission("admissions.edit"), updateAdmissionChecklist);
 router.put("/:id/status", authorizePermission("admissions.edit"), changeAdmissionStatus);

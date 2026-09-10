@@ -19,7 +19,7 @@ function Sidebar({ isOpen = false, onClose }) {
     { path: "/teacher-salary", icon: "🧑‍💼", label: "Teacher Salary", permission: "salary.view" },
 
     { path: "/admissions", icon: "🎓", label: "Admissions", permission: "admissions.view" },
-    { path: "/admissions?source=online", icon: "💻", label: "Online Applications", permission: "admissions.view", indent: true },
+    { path: "/online-applicants", icon: "💻", label: "ONLINE APPLICANTS", permission: "admissions.view", indent: true },
     { path: "/classes", icon: "🏫", label: "Classes & Sections", permission: "classes.view" },
     { path: "/subjects", icon: "📚", label: "Subjects", permission: "subjects.view" },
     { path: "/exams", icon: "📝", label: "Exams", permission: "results.view" },

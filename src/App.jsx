@@ -4,7 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Sidebar from "./components/sidebar";
 
 /* ================================
-   AUTH
+   AUTH & PUBLIC
 ================================ */
 import Login from "./pages/Login";
 import PublicAdmissionStatus from "./pages/PublicAdmissionStatus";
@@ -23,6 +23,7 @@ import TeacherAttendance from "./pages/TeacherAttendance";
 import TeacherSalary from "./pages/TeacherSalary";
 import SchoolAdmin from "./pages/SchoolAdmin";
 import Admission from "./pages/Admission";
+import OnlineApplicants from "./pages/OnlineApplicants";
 import Timetable from "./pages/Timetable";
 import Classes from "./pages/Classes";
 import Subjects from "./pages/Subjects";
@@ -155,6 +156,14 @@ function AppLayout() {
             element={
               <ProtectedRoute requiredPermission="admissions.view">
                 <Admission />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/online-applicants"
+            element={
+              <ProtectedRoute requiredPermission="admissions.view">
+                <OnlineApplicants />
               </ProtectedRoute>
             }
           />

@@ -59,12 +59,29 @@ export function createAdmissionDocument(input = {}) {
     pincode: input.pincode || "",
     prevSchool: input.prevSchool || "N/A",
     appliedDate: input.appliedDate || now.toISOString().split("T")[0],
-    status: input.status || (pendingItems.length > 0 ? "Under Review" : "Submitted"),
+
+    // Status Model: Pending (Submitted) -> Under Review -> Documents Required -> Approved -> Rejected -> Admitted (Confirmed)
+    status: input.status || "Submitted",
     checklist: defaultChecklist,
     pendingItems,
     hasPendingItems: pendingItems.length > 0,
     correctionRequired: Boolean(input.correctionRequired),
     correctionNotes: input.correctionNotes || "",
+    rejectionReason: input.rejectionReason || "",
+
+    // Sub-schemas
+    documents: Array.isArray(input.documents) ? input.documents : [],
+    communicationHistory: Array.isArray(input.communicationHistory) ? input.communicationHistory : [],
+
+    // Audit Timestamps & Admin Info
+    submittedAt: input.submittedAt ? new Date(input.submittedAt) : now,
+    reviewedAt: input.reviewedAt ? new Date(input.reviewedAt) : null,
+    docsRequestedAt: input.docsRequestedAt ? new Date(input.docsRequestedAt) : null,
+    approvedAt: input.approvedAt ? new Date(input.approvedAt) : null,
+    rejectedAt: input.rejectedAt ? new Date(input.rejectedAt) : null,
+    admittedAt: input.admittedAt ? new Date(input.admittedAt) : null,
+    actedBy: input.actedBy || null,
+
     createdStudentId: input.createdStudentId || null,
     createdAdmissionNo: input.createdAdmissionNo || null,
     createdAt: input.createdAt ? new Date(input.createdAt) : now,
@@ -115,12 +132,25 @@ export function sanitizeAdmission(doc) {
     pincode: doc.pincode || "",
     appliedDate: doc.appliedDate || "",
     prevSchool: doc.prevSchool || "N/A",
-    status: doc.status || (pendingItems.length > 0 ? "Under Review" : "Submitted"),
+    status: doc.status || "Submitted",
     checklist: doc.checklist || {},
     pendingItems,
     hasPendingItems: pendingItems.length > 0,
     correctionRequired: Boolean(doc.correctionRequired),
     correctionNotes: doc.correctionNotes || "",
+    rejectionReason: doc.rejectionReason || "",
+
+    documents: doc.documents || [],
+    communicationHistory: doc.communicationHistory || [],
+
+    submittedAt: doc.submittedAt || doc.createdAt,
+    reviewedAt: doc.reviewedAt || null,
+    docsRequestedAt: doc.docsRequestedAt || null,
+    approvedAt: doc.approvedAt || null,
+    rejectedAt: doc.rejectedAt || null,
+    admittedAt: doc.admittedAt || null,
+    actedBy: doc.actedBy || null,
+
     createdStudentId: doc.createdStudentId || null,
     createdAdmissionNo: doc.createdAdmissionNo || null,
     createdAt: doc.createdAt,
